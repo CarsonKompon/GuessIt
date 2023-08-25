@@ -1,0 +1,30 @@
+@using Sandbox;
+@using Sandbox.UI;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root>
+
+    <div class="content">
+        <p class="header">How to Play GuessIt!</p>
+        <div class="instructions">
+            <p>When the game begins, someone is chosen at random to Draw.</p>
+            <p>That person will be given a choice of 3 different things they could draw.</p>
+            <p>They must then try to draw whichever word they chose while the other players guess.</p>
+            <p>Players earn more points depending on how quickly they were able to get the correct answer.</p>
+            <p>Every few seconds a letter is revealed until the timer runs out.</p>
+            <p>If nobody is able to guess it when time runs out, the person who was drawing will lose points.</p>
+            <p>It will then rotate through every person who was in the lobby when the game started until everyone has had a chance to draw.</p>
+        </div>
+        <button onclick=@Close>Return</button>
+    </div>
+</root>
+
+@code
+{
+    void Close()
+    {
+        this.Delete();
+    }
+}

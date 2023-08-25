@@ -1,0 +1,33 @@
+@using Sandbox;
+@using Sandbox.UI;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root class="lobby">
+    <div class="name">@Lobby.Title</div>
+    <div class="bottom">
+        <div class="info">
+            <div class="members"><i>person</i> @(Lobby.MemberCount + "/" + Lobby.MaxMembers)</div>
+            <p class="state waiting">Waiting for players</p>
+        </div>
+        <div class="join">
+            <button class="btn btn-primary">Join</button>
+        </div>
+    </div>
+</root>
+
+@code
+{
+    public Sandbox.Menu.ILobby Lobby { get; set; }
+
+    protected override void OnClick(MousePanelEvent e)
+    {
+        JoinLobby();
+    }
+
+    async void JoinLobby()
+    {
+        await Lobby.JoinAsync();
+    }
+}

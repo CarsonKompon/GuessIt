@@ -1,0 +1,73 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Collections.Generic;
+@using System.Linq;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root>
+
+    <div class="header">
+        <p class="title">Public Lobbies</p>
+    </div>
+    <div class="lobbies">
+        @if(Lobbies.Count == 0)
+        {
+            <p class="no-lobbies">No lobbies found</p>
+        }
+        else
+        {
+            @foreach( var lobby in Lobbies )
+            {
+                <LobbyPanelButton Lobby=@lobby />
+            }
+        }
+    </div>
+
+</root>
+
+
+@code
+{
+    List<Sandbox.Menu.ILobby> Lobbies = new();
+    RealTimeSince _lastUpdate = 8;
+
+    public override void Tick()
+    {
+        if(_lastUpdate > 8)
+        {
+            FetchLobbies();
+            _lastUpdate = 0;
+        }
+    }
+
+    private async void FetchLobbies()
+    {
+        Log.Info("Wow!");
+
+
+        // get lobbies
+        var lobbies = await Game.Menu.QueryLobbiesAsync(null, 1);
+        //lobbies = lobbies.OrderByDescending( x => x.MemberCount ).ToArray();
+
+        foreach ( var lobby in lobbies )
+        {
+            Log.Info("adding a lob");
+        }
+
+    }
+
+    protected override int BuildHash()
+    {
+        int hash = 0;
+
+        foreach ( var lobby in Lobbies )
+        {
+            hash += (int)lobby.Id;
+            hash += lobby.MemberCount;
+        }
+
+        return hash;
+    }
+}

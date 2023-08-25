@@ -1,0 +1,31 @@
+{
+  "Title": "GuessIt",
+  "Type": "game",
+  "Org": "carsonk",
+  "Ident": "guessit",
+  "Tags": null,
+  "Schema": 1,
+  "HasAssets": true,
+  "AssetsPath": "",
+  "Resources": "/fonts/*\n/words/*",
+  "MenuResources": "/ui/*\n/words/*\n/fonts/*\n/sounds/*",
+  "HasCode": true,
+  "CodePath": "/code/",
+  "PackageReferences": [],
+  "EditorReferences": null,
+  "Metadata": {
+    "MaxPlayers": 64,
+    "MinPlayers": 1,
+    "TickRate": 50,
+    "GameNetworkType": "Multiplayer",
+    "MapSelect": "Unrestricted",
+    "MapList": [
+      "facepunch.flatgrass"
+    ],
+    "RankType": "None",
+    "PerMapRanking": false,
+    "LeaderboardType": "None",
+    "ProjectTemplate": null,
+    "CsProjName": ""
+  }
+}

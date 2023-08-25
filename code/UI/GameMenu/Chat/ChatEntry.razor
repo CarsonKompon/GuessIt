@@ -1,0 +1,22 @@
+@using Sandbox;
+@using Sandbox.UI;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root class="message">
+    <p class="name">@(Name)</p>
+    <p class="content">@Content</p>
+</root>
+
+@code
+{
+    public string Name { get; set; }
+    public string Content { get; set; }
+
+    public void SetMessage(string name, string content)
+    {
+        Name = name;
+        Content = content;
+    }
+}

@@ -1,0 +1,16 @@
+ChatEntry
+{
+    gap: 4px;
+    flex-shrink: 0;
+
+    .name
+    {
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    .content
+    {
+        
+    }
+}

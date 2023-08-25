@@ -1,0 +1,46 @@
+@using Sandbox;
+@using Sandbox.UI;
+@attribute [StyleSheet]
+
+@inherits RootPanel
+@implements Sandbox.Menu.IGameMenuPanel
+
+@namespace GuessIt
+
+<root>
+
+    @if(InGame)
+    {
+        <GameMenu />
+    }
+    else
+    {
+        <MainMenu />
+    }
+
+</root>
+
+@code
+{
+    public static GuessIt Instance;
+
+    bool InGame = false;
+
+    protected override void OnAfterTreeRender(bool firstTime)
+    {
+        base.OnAfterTreeRender(firstTime);
+
+        if(firstTime) Instance = this;
+    }
+
+    public static void ShowGame()
+    {
+        Instance.InGame = true;
+    }
+
+    public static void ShowMainMenu()
+    {
+        Instance.InGame = false;
+    }
+
+}

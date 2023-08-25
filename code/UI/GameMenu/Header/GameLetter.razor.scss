@@ -1,0 +1,15 @@
+GameLetter
+{
+    font-size: 42px;
+    font-weight: black;
+    font-family: AzeretMono;
+    width: 32px;
+    opacity: 1;
+    top: 0px;
+    transition: all 0.5s ease-in-out;
+
+    &:intro
+    {
+        opacity: 0;
+    }
+}

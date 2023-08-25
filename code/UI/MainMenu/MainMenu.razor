@@ -1,0 +1,51 @@
+@using Sandbox;
+@using Sandbox.UI;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root>
+
+    <div class="mainmenu">
+        <div class="logo-container">
+            <img src="ui/logo.png" class="logo" />
+            <p>A game by Carson Kompon</p>
+        </div>
+
+        <div class="menu-container">
+            <button class="btn btn-primary" onclick=@CreateLobby>Create Lobby</button>
+            <button class="btn btn-primary" onclick=@HowToPlay>How To Play</button>
+        </div>
+    </div>
+
+    <div class="lobbylist">
+        <LobbyPanel />
+    </div>
+
+</root>
+
+@code
+{
+    HowToPlayMenu HowToPlayPopup;
+
+    async void CreateLobby()
+    {
+        await Game.Menu.CreateLobbyAsync( 16 );
+    }
+
+    void HowToPlay()
+    {
+        if(HowToPlayPopup.IsValid())
+        {
+            HowToPlayPopup.Delete();
+        }
+        HowToPlayPopup = AddChild<HowToPlayMenu>();
+    }
+
+    [GameEvent.Menu.LobbyJoined]
+    void OnLobbyJoined()
+    {
+        GuessIt.ShowGame();
+    }
+
+}

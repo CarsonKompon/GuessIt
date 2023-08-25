@@ -1,0 +1,44 @@
+@using Sandbox;
+@using Sandbox.UI;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root>
+    <div class="header">Guess the following:</div>
+    <div @ref="WordContainer" class="word">
+        <div class="letter">_</div>
+        <div class="letter">U</div>
+        <div class="letter">_</div>
+        <div class="letter">K</div>
+        <div class="letter space"></div>
+        <div class="letter">_</div>
+        <div class="letter">O</div>
+        <div class="letter">_</div>
+    </div>
+</root>
+
+@code
+{
+    Panel WordContainer { get; set; }
+    string Override = "";
+    string Header = "Guess the following:";
+    string Word = "BUCKAROO";
+
+    void SetOverride(string over)
+    {
+        Word = over;
+    }
+
+    void SetWord(string word, string header = "Guess the following:")
+    {
+        Override = "";
+        Word = word;
+        Header = header;
+
+        foreach(var child in WordContainer.Children)
+        {
+            child.Delete();
+        }
+    }
+}
