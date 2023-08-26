@@ -2,6 +2,7 @@ PlayerListEntry
 {
     padding: 8px;
     transition: all 0.1s ease-out;
+    flex-shrink: 0;
 
     .avatar
     {

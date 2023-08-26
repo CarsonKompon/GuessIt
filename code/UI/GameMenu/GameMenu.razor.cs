@@ -25,7 +25,9 @@ enum LOBBY_MESSAGE
     REQUEST_CANVAS,
     SEND_CANVAS,
     CORRECT_GUESS,
-    REVEAL_WORD
+    REVEAL_WORD,
+    SHOW_RESULTS,
+    END_GAME
 }
 
 public partial class GameMenu
@@ -105,6 +107,16 @@ public partial class GameMenu
         if(Lobby.Data.ContainsKey("drawing")) Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
         if(Lobby.Data.ContainsKey("guess")) Guess = Lobby.Data["guess"];
         if(Lobby.Data.ContainsKey("timer")) GameTimer = float.Parse(Lobby.Data["timer"]);
+        if(Lobby.Data.ContainsKey("scores"))
+        {
+            PlayerScores.Clear();
+            string[] scores = Lobby.Data["scores"].Split(',');
+            foreach(var score in scores)
+            {
+                string[] scoreSplit = score.Split(':');
+                PlayerScores.Add(long.Parse(scoreSplit[0]), long.Parse(scoreSplit[1]));
+            }
+        }
 
         if(LobbyState == LOBBY_STATE.CHOOSING_WORD)
         {
@@ -187,7 +199,8 @@ public partial class GameMenu
         
         Guess = word;
         Lobby.SetData("guess", Guess);
-
+        GameTimer = 120f;
+        
         ResetCanvas();
 
         NetworkChooseWord();
@@ -213,27 +226,6 @@ public partial class GameMenu
 
     }
 
-    void NextRound()
-    {
-        if(Lobby.Owner.Id != Game.SteamId) return;
-        if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS || LobbyState == LOBBY_STATE.RESULTS) return;
-
-        if(StartingPlayers.Count > 0)
-        {
-            Drawing = StartingPlayers[0];
-            StartingPlayers.RemoveAt(0);
-            LobbyState = LOBBY_STATE.CHOOSING_WORD;
-            Header.SetOverride(Drawing.Name + " is choosing a word...");
-            Lobby.SetData("played", ListString(FinishedPlayers));
-            Lobby.SetData("drawing", Drawing.Id.ToString());
-            StartRound();
-        }
-        else
-        {
-            ShowResults();
-        }
-    }
-
     void CorrectGuess(Friend friend)
     {
         if(Lobby.Owner.Id != Game.SteamId) return;
@@ -241,7 +233,7 @@ public partial class GameMenu
         if(LobbyState != LOBBY_STATE.PLAYING) return;
 
         long DrawingScore = 200;
-        long PlayerScore = 1000;
+        long PlayerScore = (long)MathF.Floor(Utils.Map(GameTimer, 120, 0, 1000, 800));
 
 
         CorrectPlayers.Add(friend);
@@ -251,10 +243,10 @@ public partial class GameMenu
         {
             if(CorrectPlayers.Count > 1)
             {
-                PlayerScore = (long)MathF.Floor(Utils.Map(GameTimer, 30, 0, 1000, 250));
+                PlayerScore = (long)MathF.Floor(Utils.Map(GameTimer, 30, 0, 800, 250));
                 DrawingScore = 100;
             }
-            RevealAnswer();
+            NetworkRevealAnswer();
         }
         else if(CorrectPlayers.Count == 1)
         {
@@ -273,12 +265,61 @@ public partial class GameMenu
 
     void RevealAnswer()
     {
+        Header.SetWord(Guess, "The word was:", true);
 
+        CreateChatEntry("The word was: " + Guess, "");
+
+        GameTimer = 0;
+    }
+
+    void NextRound()
+    {
+        if(Lobby.Owner.Id != Game.SteamId) return;
+        if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS || LobbyState == LOBBY_STATE.RESULTS) return;
+
+        if(StartingPlayers.Count > 0)
+        {
+            Drawing = StartingPlayers[0];
+            StartingPlayers.RemoveAt(0);
+            FinishedPlayers.Add(Drawing);
+            LobbyState = LOBBY_STATE.CHOOSING_WORD;
+            Header.SetOverride(Drawing.Name + " is choosing a word...");
+            Lobby.SetData("played", ListString(FinishedPlayers));
+            Lobby.SetData("drawing", Drawing.Id.ToString());
+            NetworkStartRound();
+        }
+        else
+        {
+            NetworkShowResults();
+        }
     }
 
     void ShowResults()
     {
+        if(Lobby.Owner.Id != Game.SteamId) return;
+        if(LobbyState == LOBBY_STATE.RESULTS) return;
 
+        LobbyState = LOBBY_STATE.RESULTS;
+        Header.SetOverride("Results");
+        
+        GameTimer = 10f;
+        
+        if(Lobby.Owner.Id == Game.SteamId)
+        {
+            Lobby.SetData("state", LOBBY_STATE.RESULTS.ToString());
+            Lobby.SetData("timer", GameTimer.ToString());
+        }
+    }
+
+    void EndGame()
+    {
+        LobbyState = LOBBY_STATE.WAITING_FOR_PLAYERS;
+        Header.SetOverride("Waiting for players...");
+
+        if(Lobby.Owner.Id == Game.SteamId)
+        {
+            InitLobby();
+        }
     }
 
     string ListString(List<Friend> list)
@@ -369,6 +410,21 @@ public partial class GameMenu
 
     void UpdatePlayerOrder()
     {
+        if(Lobby.Owner.Id == Game.SteamId)
+        {
+            // Turn dictionary into string as "key:val,key:val"
+            string scoreString = "";
+            for(int i=0; i<PlayerScores.Count; i++)
+            {
+                scoreString += PlayerScores.ElementAt(i).Key + ":" + PlayerScores.ElementAt(i).Value;
+                if(i < PlayerScores.Count - 1)
+                {
+                    scoreString += ",";
+                }
+            }
+            Lobby.SetData("scores", scoreString);
+        }
+
         for(int i=0; i<PlayerList.ChildrenCount; i++)
         {
             if(PlayerList.GetChild(i) is PlayerListEntry entry)
@@ -469,23 +525,50 @@ public partial class GameMenu
 	{
 		Lobby.ReceiveMessages(OnNetworkMessage);
 
-        if(LobbyState == LOBBY_STATE.PLAYING && GameTimer > 0f)
+        if(LobbyState == LOBBY_STATE.PLAYING || LobbyState == LOBBY_STATE.CHOOSING_WORD)
         {
-            GameTimer -= Time.Delta;
-            if(GameTimer < 0f){
-                
-                if(Lobby.Owner.Id == Game.SteamId)
-                {
-                    RevealAnswer();
-                }
+            if(GameTimer > 0f)
+            {
+                GameTimer -= Time.Delta;
+                if(GameTimer <= 0f){
+                    
+                    if(Lobby.Owner.Id == Game.SteamId)
+                    {
+                        NetworkRevealAnswer();
+                    }
 
-                GameTimer = 0f;
+                    GameTimer = 0f;
+                }
+            }
+            else if(Lobby.Owner.Id == Game.SteamId && GameTimer > -5f)
+            {
+                GameTimer -= Time.Delta;
+                if(GameTimer <= -5f)
+                {
+                    NextRound();
+                    GameTimer = -5f;
+                }
+            }
+        }
+        else if(LobbyState == LOBBY_STATE.RESULTS)
+        {
+            if(GameTimer > 0f)
+            {
+                GameTimer -= Time.Delta;
+                if(GameTimer < 0f)
+                {
+                    if(Lobby.Owner.Id == Game.SteamId)
+                    {
+                        EndGame();
+                    }
+                    GameTimer = 0f;
+                }
             }
         }
 
         if(LastUpdate > 2f)
         {
-            if(Lobby.Owner.Id == Game.SteamId)
+            if(Lobby.Owner.Id == Game.SteamId && GameTimer >= 0f)
             {
                 Lobby.SetData("timer", GameTimer.ToString());
             }
@@ -601,6 +684,7 @@ public partial class GameMenu
                 {
                     Lobby.SetData("guess", Guess);
                 }
+                GameTimer = 120f;
                 StartDrawing();
                 break;
 
@@ -674,6 +758,27 @@ public partial class GameMenu
                     if(Lobby.Data.ContainsKey("timer")) GameTimer = float.Parse(Lobby.Data["timer"]);
                 }
 
+                break;
+
+            case LOBBY_MESSAGE.REVEAL_WORD:
+                if(LobbyState != LOBBY_STATE.PLAYING) break;
+
+                byteLength = data.Read<int>();
+                byte[] wordBytes = new byte[byteLength];
+                for(int i=0; i<byteLength; i++)
+                {
+                    wordBytes[i] = data.Read<byte>();
+                }
+                Guess = System.Text.Encoding.Unicode.GetString(wordBytes);
+                RevealAnswer();
+                break;
+            
+            case LOBBY_MESSAGE.SHOW_RESULTS:
+                ShowResults();
+                break;
+            
+            case LOBBY_MESSAGE.END_GAME:
+                EndGame();
                 break;
         }
     }
@@ -759,6 +864,45 @@ public partial class GameMenu
         data.Write((long)playerScore);
         data.Write((long)Drawing.Id);
         data.Write((long)drawingScore);
+
+        Lobby.BroadcastMessage(data);
+    }
+
+    void NetworkRevealAnswer()
+    {
+        if(Lobby.Owner.Id != Game.SteamId) return;
+        if(LobbyState != LOBBY_STATE.PLAYING) return;
+        GameTimer = 0f;
+
+        byte[] wordBytes = System.Text.Encoding.Unicode.GetBytes(Guess);
+        ByteStream data = ByteStream.Create(6 + wordBytes.Length);
+        data.Write((ushort)LOBBY_MESSAGE.REVEAL_WORD);
+        data.Write((int)wordBytes.Length);
+        for(int i=0; i<wordBytes.Length; i++)
+        {
+            data.Write(wordBytes[i]);
+        }
+
+        Lobby.BroadcastMessage(data);
+    }
+
+    void NetworkShowResults()
+    {
+        if(Lobby.Owner.Id != Game.SteamId) return;
+        GameTimer = 10f;
+
+        ByteStream data = ByteStream.Create(2);
+        data.Write((ushort)LOBBY_MESSAGE.SHOW_RESULTS);
+
+        Lobby.BroadcastMessage(data);
+    }
+
+    void NetworkEndGame()
+    {
+        if(Lobby.Owner.Id != Game.SteamId) return;
+
+        ByteStream data = ByteStream.Create(2);
+        data.Write((ushort)LOBBY_MESSAGE.END_GAME);
 
         Lobby.BroadcastMessage(data);
     }

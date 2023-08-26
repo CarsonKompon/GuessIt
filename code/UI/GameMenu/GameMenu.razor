@@ -16,7 +16,7 @@
         
         <div class="game-header">
             <div class="game-info">
-                <div class="timer">@MathF.Floor(GameTimer)</div>
+                <div class="timer">@MathF.Floor(MathF.Max(GameTimer, 0))</div>
                 <div class="round">Round 1 of 3</div>
             </div>
 
