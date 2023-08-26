@@ -136,7 +136,11 @@ public partial class GameMenu
         else
         {
             Header.SetWord(Guess);
+        }
 
+        if(Game.Menu.Lobby.Owner.Id == Game.SteamId)
+        {
+            Game.Menu.Lobby.SetData("state", LOBBY_STATE.PLAYING.ToString());
         }
 
     }
@@ -333,7 +337,7 @@ public partial class GameMenu
 
     protected override int BuildHash()
     {
-        return HashCode.Combine(LogoClass());
+        return HashCode.Combine(LogoClass(), Game.Menu.Lobby.MemberCount);
     }
 
 
@@ -372,6 +376,20 @@ public partial class GameMenu
                 Guess = System.Text.Encoding.Unicode.GetString(guessBytes);
                 StartDrawing();
                 break;
+
+            case LOBBY_MESSAGE.DRAW:
+                Color32 color = data.Read<Color32>();
+                int size = data.Read<ushort>();
+                ushort pointCount = data.Read<ushort>();
+                List<Vector2> points = new List<Vector2>();
+                for(int i=0; i<pointCount; i++)
+                {
+                    ushort x = data.Read<ushort>();
+                    ushort y = data.Read<ushort>();
+                    points.Add(new Vector2(x, y));
+                }
+                Draw(points, color, size);
+                break;
         }
     }
 
@@ -407,6 +425,17 @@ public partial class GameMenu
 
     public void NetworkDraw(List<Vector2> points, Color color, int size)
     {
+        ByteStream data = ByteStream.Create(10 + (2 * points.Count));
+        data.Write((ushort)LOBBY_MESSAGE.DRAW);
+        data.Write(color.ToColor32());
+        data.Write((ushort)size);
+        data.Write((ushort)points.Count);
+        for(int i=0; i<points.Count; i++)
+        {
+            data.Write((ushort)points[i].x);
+            data.Write((ushort)points[i].y);
+        }
 
+        Game.Menu.Lobby.BroadcastMessage(data);
     }
 }

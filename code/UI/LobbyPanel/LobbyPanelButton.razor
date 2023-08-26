@@ -1,5 +1,7 @@
 @using Sandbox;
 @using Sandbox.UI;
+@using System.Collections.Generic;
+@using System.Linq;
 @attribute [StyleSheet]
 
 @namespace GuessIt
@@ -9,7 +11,7 @@
     <div class="bottom">
         <div class="info">
             <div class="members"><i>person</i> @(Lobby.MemberCount + "/" + Lobby.MaxMembers)</div>
-            <p class="state waiting">Waiting for players</p>
+            <p class="state waiting">@Lobby.State</p>
         </div>
         <div class="join">
             <button class="btn btn-primary">Join</button>
@@ -28,6 +30,10 @@
 
     async void JoinLobby()
     {
-        await Lobby.JoinAsync();
+        bool joined = await Lobby.JoinAsync();
+        if(joined)
+        {
+            GuessIt.ShowGame();
+        }
     }
 }

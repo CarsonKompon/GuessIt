@@ -12,7 +12,7 @@
         <p class="title">Public Lobbies</p>
     </div>
     <div class="lobbies">
-        @if(Lobbies.Count == 0)
+        @if(Lobbies.Count == 0 && !Loading)
         {
             <p class="no-lobbies">No lobbies found</p>
         }
@@ -32,6 +32,7 @@
 {
     List<Sandbox.Menu.ILobby> Lobbies = new();
     RealTimeSince _lastUpdate = 8;
+    bool Loading = false;
 
     public override void Tick()
     {
@@ -46,16 +47,19 @@
     {
         Log.Info("Wow!");
 
+        Loading = true;
 
         // get lobbies
         var lobbies = await Game.Menu.QueryLobbiesAsync(null, 1);
         //lobbies = lobbies.OrderByDescending( x => x.MemberCount ).ToArray();
 
+        Lobbies.Clear();
         foreach ( var lobby in lobbies )
         {
-            Log.Info("adding a lob");
+            Lobbies.Add(lobby);
         }
 
+        Loading = false;
     }
 
     protected override int BuildHash()
