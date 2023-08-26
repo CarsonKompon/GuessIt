@@ -40,14 +40,10 @@
         {
             Timer = 0f;
 
-            string[] easyWords = FileSystem.Mounted.ReadAllText("words/words-easy.txt").Split("\n");
-            string[] mediumWords = FileSystem.Mounted.ReadAllText("words/words-medium.txt").Split("\n");
-            string[] hardWords = FileSystem.Mounted.ReadAllText("words/words-hard.txt").Split("\n");
-
             // Choose a random word from each list
-            EasyWord = easyWords[new Random().Next(easyWords.Length)].Trim();
-            MediumWord = mediumWords[new Random().Next(mediumWords.Length)].Trim();
-            HardWord = hardWords[new Random().Next(hardWords.Length)].Trim();
+            EasyWord = Utils.GetRandomWord(WORD_DIFFICULTY.EASY);
+            MediumWord = Utils.GetRandomWord(WORD_DIFFICULTY.MEDIUM);
+            HardWord = Utils.GetRandomWord(WORD_DIFFICULTY.HARD);
         }
     }
 

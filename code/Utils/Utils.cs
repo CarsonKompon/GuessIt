@@ -1,7 +1,16 @@
+using Sandbox;
 using System;
+using System.Collections.Generic;
 
 namespace GuessIt
 {
+    public enum WORD_DIFFICULTY
+    {
+        EASY,
+        MEDIUM,
+        HARD
+    }
+
     public static class Utils
     {
         /// <summary>
@@ -32,6 +41,54 @@ namespace GuessIt
             {
                 return _outputMin + (mapped * (_outputMax - _outputMin));
             }
+        }
+
+        public static string[] EasyWords;
+        public static string[] MediumWords;
+        public static string[] HardWords;
+        public static string GetRandomWord(WORD_DIFFICULTY difficulty)
+        {
+            Random rand = new Random();
+            if(difficulty == WORD_DIFFICULTY.MEDIUM)
+            {
+                if(rand.Next(0, 100) < 20)
+                {
+                    difficulty = WORD_DIFFICULTY.EASY;
+                }
+            }
+            else if(difficulty == WORD_DIFFICULTY.HARD)
+            {
+                if(rand.Next(0, 100) < 20)
+                {
+                    difficulty = WORD_DIFFICULTY.MEDIUM;
+                }
+            }
+        
+            if(difficulty == WORD_DIFFICULTY.EASY)
+            {
+                if(EasyWords.Length == 0)
+                {
+                    EasyWords = FileSystem.Mounted.ReadAllText("words/words-easy.txt").Split("\n");
+                }
+                return EasyWords[rand.Next(0, EasyWords.Length)].Trim();
+            }
+            else if(difficulty == WORD_DIFFICULTY.MEDIUM)
+            {
+                if(MediumWords.Length == 0)
+                {
+                    MediumWords = FileSystem.Mounted.ReadAllText("words/words-medium.txt").Split("\n");
+                }
+                return MediumWords[rand.Next(0, MediumWords.Length)].Trim();
+            }
+            else if(difficulty == WORD_DIFFICULTY.HARD)
+            {
+                if(HardWords.Length == 0)
+                {
+                    HardWords = FileSystem.Mounted.ReadAllText("words/words-hard.txt").Split("\n");
+                }
+                return HardWords[rand.Next(0, HardWords.Length)].Trim();
+            }
+            return "Broken Video Game";
         }
     }
 }

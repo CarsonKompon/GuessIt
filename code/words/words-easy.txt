@@ -174,8 +174,6 @@ Garry's Mod
 DLC
 Hacker
 Glitch
-Minecraft
-Fortnite
 Tetris
 Arcade
 Achievement
@@ -228,7 +226,6 @@ Origami
 Fortune Cookie
 Lighthouse
 Hourglass
-Tarot Cards
 Time Machine
 Lightsaber
 Wizard
@@ -304,3 +301,121 @@ Gameboy
 Gamecube
 Wii
 Cryptocurrency
+Television
+Remote Control
+Frisbee
+Elevator
+Ladder
+Sticky Note
+Highlighter
+Ruler
+Eraser
+Printer
+Scissors
+Envelope
+Globe
+Compass
+Gum
+Scotch Tape
+Hole Puncher
+Pencil Sharpener
+Staple Remover
+Tea
+Donut
+Bagel
+Water Cooler
+Easel
+Stamps
+Whiteboard
+Toothbrush
+Tissue
+Vase
+Lawnmower
+Toaster
+Blender
+Microwave
+Mixer
+Oven
+Frying Pan
+Muffin
+Sushi
+Popcorn
+Cereal
+Salt
+Grapes
+Peach
+Strawberry
+Blueberry
+Raspberry
+Mushroom
+Pumpkin
+Potato
+Zebra
+Lion
+Tiger
+Elephant
+Giraffe
+Kangaroo
+Seagull
+Penguin
+Ant
+Ladybug
+Bee
+Honey
+Balloon
+Kite
+Helicopter
+Airplane
+Rocket
+Nut
+Bolt
+Screw
+Rope
+Saw
+Hammer
+Cap
+Bikini
+Flip Flops
+Sunglasses
+Sweater
+Hoodie
+Jacket
+Perfume
+Lipstick
+Eyeliner
+Mirror
+Hairdryer
+GPS
+Drone
+Battery
+USB Stick
+Smart Watch
+Projector
+Test Tube
+Microscope
+Planet
+Asteroid
+Meteor
+Solar System
+UFO
+Alien
+Astronaut
+Netflix
+Hulu
+The Office
+Pokemon
+Pikachu
+Shrek
+Finding Nemo
+Star Wars
+Star Trek
+Snapchat
+Reddit
+TikTok
+Frozen
+Minions
+Fortnite
+Minecraft
+NFT
+Roblox
+Illuminati
