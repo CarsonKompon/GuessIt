@@ -46,6 +46,7 @@ GameResults
             text-align: center;
             font-size: 20px;
             gap: 0px;
+            overflow-y: scroll;
 
             .leaderboard-item
             {
@@ -54,11 +55,23 @@ GameResults
                 font-size: 32px;
                 font-weight: 400;
                 gap: 8px;
-                align-items: space-between;
+                align-items: space-evenly;
+                flex-shrink: 0;
 
                 .rank
                 {
-                    width: 32px;
+                    width: 64px;
+                }
+
+                .name
+                {
+                    flex-grow: 1;
+                }
+
+                .score
+                {
+                    align-content: end;
+                    text-align: right;
                 }
 
                 &.odd

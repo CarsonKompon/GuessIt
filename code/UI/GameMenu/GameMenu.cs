@@ -361,8 +361,8 @@ public partial class GameMenu
 
     void EndGame()
     {
-        if(LobbyState != LOBBY_STATE.WAITING_FOR_PLAYERS) return;
-        
+        if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS) return;
+
         LobbyState = LOBBY_STATE.WAITING_FOR_PLAYERS;
         Header.SetOverride("Waiting for players...");
 
