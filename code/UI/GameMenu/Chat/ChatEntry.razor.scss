@@ -18,4 +18,9 @@ ChatEntry
     {
         color: grey;
     }
+
+    &.guess-correct
+    {
+        color: limegreen;
+    }
 }

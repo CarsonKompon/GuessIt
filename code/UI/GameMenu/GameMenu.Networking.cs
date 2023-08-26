@@ -125,7 +125,7 @@ public partial class GameMenu
                 Friend drawing = new Friend(drawerId);
                 long drawingScore = data.Read<long>();
 
-                CreateChatEntry(player.Name, " guessed correctly!");
+                CreateChatEntry(player.Name, " guessed correctly!", "guess-correct");
                 Audio.Play("ui.guess.correct");
 
                 if(!CorrectPlayers.Contains(player)) CorrectPlayers.Add(player);

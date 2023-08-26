@@ -542,17 +542,16 @@ public partial class GameMenu
 
         if(drawingState)
         {
-            if(isDrawing || (!isCorrect && !imCorrect) || (isCorrect && imCorrect))
-            {
-                CreateChatEntry(friend.Name + ":", message, (isCorrect ? "post-game" : ""));
-            }
-
-            if(Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Lobby.Data["guess"]))
+            if(!isDrawing && Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Lobby.Data["guess"]))
             {
                 if(Lobby.Owner.Id == Game.SteamId)
                 {
                     CorrectGuess(friend);
                 }
+            }
+            else if(isDrawing || (!isCorrect && !imCorrect) || (isCorrect && imCorrect))
+            {
+                CreateChatEntry(friend.Name + ":", message, (isCorrect ? "post-game" : ""));
             }
         }
         else
