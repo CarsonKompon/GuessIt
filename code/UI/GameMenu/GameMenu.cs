@@ -27,6 +27,7 @@ public partial class GameMenu
     Texture Canvas;
     string Guess = "";
     float GameTimer = 120f;
+    List<Friend> AllPlayers = new List<Friend>();
 
     // UI Variables
     GameHeader Header { get; set; }
@@ -64,12 +65,14 @@ public partial class GameMenu
                 JoinedLobby();
             }
 
+            AllPlayers.Clear();
             foreach(var friend in Lobby.Members)
             {
                 PlayerListEntry entry = PlayerList.AddChild<PlayerListEntry>();
                 entry.Player = friend;
                 entry.Lobby = Lobby;
                 entry.SetScore(GetPlayerScore(friend.Id));
+                AllPlayers.Add(friend);
             }
             UpdatePlayerOrder();
         }
@@ -93,12 +96,16 @@ public partial class GameMenu
         if(Lobby.Data.ContainsKey("timer")) GameTimer = float.Parse(Lobby.Data["timer"]);
         if(Lobby.Data.ContainsKey("scores"))
         {
-            PlayerScores.Clear();
-            string[] scores = Lobby.Data["scores"].Split(',');
-            foreach(var score in scores)
+            string str = Lobby.Data["scores"];
+            if(!string.IsNullOrEmpty(str))
             {
-                string[] scoreSplit = score.Split(':');
-                PlayerScores.Add(long.Parse(scoreSplit[0]), long.Parse(scoreSplit[1]));
+                PlayerScores.Clear();
+                string[] scores = str.Split(',');
+                foreach(var score in scores)
+                {
+                    string[] scoreSplit = score.Split(':');
+                    PlayerScores.Add(long.Parse(scoreSplit[0]), long.Parse(scoreSplit[1]));
+                }
             }
         }
         GetLobbyPlayerData();
@@ -121,6 +128,7 @@ public partial class GameMenu
     {
         if(Lobby.Data.ContainsKey("players")) StartingPlayers = ListFromString(Lobby.Data["players"]);
         else StartingPlayers.Clear();
+
         if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
         else FinishedPlayers.Clear();
         if(Lobby.Data.ContainsKey("drawing"))
@@ -148,9 +156,10 @@ public partial class GameMenu
     {
         if(Lobby.Owner.Id != Game.SteamId) return;
         if(LobbyState != LOBBY_STATE.WAITING_FOR_PLAYERS) return;
+        if(StartButtonClasses() != "") return;
 
         StartingPlayers.Clear();
-        foreach(var friend in Lobby.Members)
+        foreach(var friend in AllPlayers)
         {
             StartingPlayers.Add(friend);
         }
@@ -162,17 +171,7 @@ public partial class GameMenu
         // Get the first player
         Drawing = StartingPlayers[0];
         StartingPlayers.RemoveAt(0);
-        
-
-        string playerString = "";
-        for(int i=0; i<StartingPlayers.Count; i++)
-        {
-            playerString += StartingPlayers[i].Id;
-            if(i < StartingPlayers.Count - 1)
-            {
-                playerString += ",";
-            }
-        }
+        Lobby.SetData("drawing", Drawing.Id.ToString());
 
         NetworkStartRound();
         
@@ -189,6 +188,7 @@ public partial class GameMenu
         if(Lobby.Owner.Id == Game.SteamId)
         {
             Lobby.SetData("drawing", Drawing.Id.ToString());
+            Lobby.SetData("played", ListString(FinishedPlayers));
             Lobby.SetData("state", LOBBY_STATE.CHOOSING_WORD.ToString());
             Lobby.SetData("correct", "");
         }
@@ -308,7 +308,7 @@ public partial class GameMenu
         if(Lobby.Owner.Id != Game.SteamId) return;
         if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS || LobbyState == LOBBY_STATE.RESULTS) return;
 
-        Log.Info(StartingPlayers);
+        Log.Info(ListString(StartingPlayers));
 
         if(StartingPlayers.Count > 0)
         {
@@ -563,6 +563,11 @@ public partial class GameMenu
         entry.Lobby = Lobby;
         entry.SetScore(GetPlayerScore(friend.Id));
         UpdatePlayerOrder();
+
+        if(!AllPlayers.Contains(friend))
+        {
+            AllPlayers.Add(friend);
+        }
     }
 
     void OnMemberLeave(Friend friend)
@@ -575,6 +580,10 @@ public partial class GameMenu
             {
                 NextRound();
             }
+            else if(LobbyState == LOBBY_STATE.RESULTS)
+            {
+                EndGame();
+            }
         }
 
         foreach(var child in PlayerList.Children)
@@ -584,9 +593,19 @@ public partial class GameMenu
                 if(entry.Player.Id == friend.Id)
                 {
                     entry.Delete();
+                    UpdatePlayerOrder();
                     break;
                 }
             }
+        }
+
+        if(AllPlayers.Contains(friend))
+        {
+            AllPlayers.Remove(friend);
+        }
+        if(AllPlayers.Count == 1 && Lobby.Owner.Id == Game.SteamId)
+        {
+            NetworkShowResults();
         }
     }
 
@@ -649,7 +668,7 @@ public partial class GameMenu
             if(GameTimer > 0f)
             {
                 GameTimer -= Time.Delta;
-                if(GameTimer < 0f)
+                if(GameTimer <= 0f)
                 {
                     if(Lobby.Owner.Id == Game.SteamId)
                     {
@@ -744,8 +763,15 @@ public partial class GameMenu
         return "";
     }
 
+    string StartButtonClasses()
+    {
+        if(Lobby.Owner.Id != Game.SteamId) return "hidden";
+        if(AllPlayers.Count > 1) return "";
+        return "disabled";
+    }
+
     protected override int BuildHash()
     {
-        return HashCode.Combine(LogoClass(), Lobby.MemberCount, MathF.Floor(GameTimer));
+        return HashCode.Combine(LogoClass(), AllPlayers.Count, MathF.Floor(GameTimer));
     }
 }

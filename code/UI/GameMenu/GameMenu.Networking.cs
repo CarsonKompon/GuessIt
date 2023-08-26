@@ -33,7 +33,10 @@ public partial class GameMenu
         switch((LOBBY_MESSAGE)messageId)
         {
             case LOBBY_MESSAGE.START_ROUND:
-                GetLobbyPlayerData();
+                if(Lobby.Owner.Id != Game.SteamId)
+                {
+                    GetLobbyPlayerData();
+                }
                 long drawingId = data.Read<long>();
                 Drawing = new Friend(drawingId);
                 if(StartingPlayers.Contains(Drawing))
@@ -85,14 +88,14 @@ public partial class GameMenu
                 {
                     long friendId = data.Read<long>();
                     Friend friend = new Friend(friendId);
-                    if(!Lobby.Members.Contains(friend)) break;
+                    if(!AllPlayers.Contains(friend)) break;
                     NetworkSendCanvas(friend);
                 }
                 break;
             
             case LOBBY_MESSAGE.SEND_CANVAS:
                 if(LobbyState != LOBBY_STATE.PLAYING) break;
-                
+
                 ResetCanvas();
                 int pixelCount = data.Read<int>();
                 Color32[] pixels = new Color32[pixelCount];
@@ -174,7 +177,6 @@ public partial class GameMenu
 
     void NetworkStartRound()
     {
-        Log.Info("Starting on the network");
         ByteStream data = ByteStream.Create(10);
         data.Write((ushort)LOBBY_MESSAGE.START_ROUND);
         data.Write(Drawing.Id);

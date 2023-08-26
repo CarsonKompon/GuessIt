@@ -19,9 +19,9 @@ LobbyCreateMenu
         left: 15%;
         width: 70%;
         height: 70%;
-        background-color: rgb(49, 0, 163);
+        background-color: rgb(255, 255, 255);
         border-radius: 32px;
-        color: white;
+        color: rgb(0, 0, 0);
         transform: scale(1);
         opacity: 1;
 
@@ -69,6 +69,11 @@ LobbyCreateMenu
                     padding: 8px;
                     padding-left: 8px;
                     text-align: left;
+
+                    .placeholder
+                    {
+                        opacity: 0.5;
+                    }
                 }
 
                 .slider
@@ -91,6 +96,11 @@ LobbyCreateMenu
                     {
                         width: 100%;
                         text-align: center;
+                    }
+
+                    .inner .track .thumb .value-tooltip .label
+                    {
+                        color: white;
                     }
                 }
 

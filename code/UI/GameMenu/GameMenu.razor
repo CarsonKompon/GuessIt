@@ -27,7 +27,7 @@
             <div class="game-settings">
                 @if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS && Lobby.Owner.Id == Game.SteamId)
                 {
-                    <button class="dev" onclick=@StartGame>Start Game</button>
+                    <button class="@StartButtonClasses()" onclick=@StartGame>Start Game</button>
                 }
             </div>
         </div>
