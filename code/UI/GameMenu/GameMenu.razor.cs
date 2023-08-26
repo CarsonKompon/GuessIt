@@ -4,6 +4,7 @@ using Sandbox.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 
 namespace GuessIt;
 
@@ -23,6 +24,7 @@ enum LOBBY_MESSAGE
     DRAW,
     REQUEST_CANVAS,
     SEND_CANVAS,
+    CORRECT_GUESS,
     REVEAL_WORD
 }
 
@@ -32,12 +34,16 @@ public partial class GameMenu
     LOBBY_STATE LobbyState = LOBBY_STATE.WAITING_FOR_PLAYERS;
     List<Friend> StartingPlayers = new List<Friend>();
     List<Friend> FinishedPlayers = new List<Friend>();
+    List<Friend> CorrectPlayers = new List<Friend>();
+    Dictionary<long, long> PlayerScores = new Dictionary<long, long>();
     public Friend Drawing;
     Texture Canvas;
     string Guess = "";
+    float GameTimer = 120f;
 
     // UI Variables
     GameHeader Header { get; set; }
+    Panel PlayerList { get; set; }
     Panel CanvasContainer { get; set; }
     GameCanvas CanvasPanel { get; set; }
     TextEntry ChatEntry { get; set; }
@@ -64,6 +70,18 @@ public partial class GameMenu
             {
                 InitLobby();
             }
+            else
+            {
+                JoinedLobby();
+            }
+
+            foreach(var friend in Lobby.Members)
+            {
+                PlayerListEntry entry = PlayerList.AddChild<PlayerListEntry>();
+                entry.Player = friend;
+                entry.Lobby = Lobby;
+                entry.SetScore(GetPlayerScore(friend.Id));
+            }
         }
     }
 
@@ -75,6 +93,30 @@ public partial class GameMenu
         Lobby.SetData("played", "");
         Lobby.SetData("guess", "");
         Lobby.SetData("correct", "");
+        Lobby.SetData("timer", "120");
+    }
+
+    void JoinedLobby()
+    {
+        LobbyState = (LOBBY_STATE)Enum.Parse(typeof(LOBBY_STATE), Lobby.Data["state"]);
+        if(Lobby.Data.ContainsKey("players")) StartingPlayers = ListFromString(Lobby.Data["players"]);
+        if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
+        if(Lobby.Data.ContainsKey("drawing")) Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
+        if(Lobby.Data.ContainsKey("guess")) Guess = Lobby.Data["guess"];
+        if(Lobby.Data.ContainsKey("timer")) GameTimer = float.Parse(Lobby.Data["timer"]);
+
+        if(LobbyState == LOBBY_STATE.CHOOSING_WORD)
+        {
+            StartRound();
+        }
+        else if(LobbyState == LOBBY_STATE.PLAYING)
+        {
+            NetworkRequestCanvas();
+        }
+        else if(LobbyState == LOBBY_STATE.RESULTS)
+        {
+            ShowResults();
+        }
     }
 
     void StartGame()
@@ -107,7 +149,6 @@ public partial class GameMenu
             }
         }
 
-        StartRound();
         NetworkStartRound();
         
     }
@@ -116,11 +157,15 @@ public partial class GameMenu
     {
         LobbyState = LOBBY_STATE.CHOOSING_WORD;
 
+        CorrectPlayers.Clear();
         Header.SetOverride(Drawing.Name + " is choosing a word...");
+        GameTimer = 15f;
 
         if(Lobby.Owner.Id == Game.SteamId)
         {
+            Lobby.SetData("drawing", Drawing.Id.ToString());
             Lobby.SetData("state", LOBBY_STATE.CHOOSING_WORD.ToString());
+            Lobby.SetData("correct", "");
         }
 
         // Reset the canvas to a plain white texture
@@ -144,7 +189,6 @@ public partial class GameMenu
 
         ResetCanvas();
 
-        StartDrawing();
         NetworkChooseWord();
     }
 
@@ -180,12 +224,55 @@ public partial class GameMenu
             LobbyState = LOBBY_STATE.CHOOSING_WORD;
             Header.SetOverride(Drawing.Name + " is choosing a word...");
             Lobby.SetData("played", ListString(FinishedPlayers));
-            CanvasContainer.AddChild<WordSelection>();
+            Lobby.SetData("drawing", Drawing.Id.ToString());
+            StartRound();
         }
         else
         {
             ShowResults();
         }
+    }
+
+    void CorrectGuess(Friend friend)
+    {
+        if(Lobby.Owner.Id != Game.SteamId) return;
+        if(CorrectPlayers.Contains(friend)) return;
+        if(LobbyState != LOBBY_STATE.PLAYING) return;
+
+        long DrawingScore = 200;
+        long PlayerScore = 1000;
+
+
+        CorrectPlayers.Add(friend);
+        Lobby.SetData("correct", ListString(CorrectPlayers));
+
+        if(CorrectPlayers.Count == Lobby.MemberCount - 1)
+        {
+            if(CorrectPlayers.Count > 1)
+            {
+                PlayerScore = (long)MathF.Floor(Utils.Map(GameTimer, 30, 0, 1000, 250));
+                DrawingScore = 100;
+            }
+            RevealAnswer();
+        }
+        else if(CorrectPlayers.Count == 1)
+        {
+            GameTimer = 30;
+        }
+        else
+        {
+            PlayerScore = (long)MathF.Floor(Utils.Map(GameTimer, 30, 0, 1000, 200));
+            DrawingScore = 100;
+        }
+
+        Lobby.SetData("timer", GameTimer.ToString());
+
+        NetworkCorrectGuess(friend, PlayerScore, DrawingScore);
+    }
+
+    void RevealAnswer()
+    {
+
     }
 
     void ShowResults()
@@ -198,7 +285,7 @@ public partial class GameMenu
         string str = "";
         for(int i=0; i<list.Count; i++)
         {
-            str += list[i].Id;
+            str += list[i].Id.ToString();
             if(i < list.Count - 1)
             {
                 str += ",";
@@ -209,6 +296,7 @@ public partial class GameMenu
 
     List<Friend> ListFromString(string str)
     {
+        if(string.IsNullOrEmpty(str)) return new List<Friend>();
         List<Friend> list = new List<Friend>();
         string[] ids = str.Split(',');
         foreach(var id in ids)
@@ -225,11 +313,99 @@ public partial class GameMenu
         ChatEntry.Focus();
     }
 
+    // PLAYER SCORE FUNCTIONS
+
+    long GetPlayerScore(long id)
+    {
+        if(PlayerScores.ContainsKey(id))
+        {
+            return PlayerScores[id];
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    void SetPlayerScore(long id, long score, bool update = true)
+    {
+        if(PlayerScores.ContainsKey(id))
+        {
+            PlayerScores[id] = score;
+        }
+        else
+        {
+            PlayerScores.Add(id, score);
+        }
+        if(update) UpdatePlayerOrder();
+    }
+
+    void GivePlayerScore(long id, long score, bool update = true)
+    {
+        if(PlayerScores.ContainsKey(id))
+        {
+            PlayerScores[id] += score;
+        }
+        else
+        {
+            PlayerScores.Add(id, score);
+        }
+        if(update) UpdatePlayerOrder();
+    }
+
+    void TakePlayerScore(long id, long score, bool update = true)
+    {
+        if(PlayerScores.ContainsKey(id))
+        {
+            PlayerScores[id] -= score;
+        }
+        else
+        {
+            PlayerScores.Add(id, -score);
+        }
+        if(update) UpdatePlayerOrder();
+    }
+
+    void UpdatePlayerOrder()
+    {
+        for(int i=0; i<PlayerList.ChildrenCount; i++)
+        {
+            if(PlayerList.GetChild(i) is PlayerListEntry entry)
+            {
+                entry.SetScore(GetPlayerScore(entry.Player.Id));
+            }
+        }
+
+        // Sort with SetChildIndex
+        List<PlayerListEntry> entries = new List<PlayerListEntry>();
+        foreach(var child in PlayerList.Children)
+        {
+            if(child is PlayerListEntry entry)
+            {
+                entries.Add(entry);
+            }
+        }
+        entries.Sort((a, b) => (int)(GetPlayerScore(b.Player.Id) - GetPlayerScore(a.Player.Id)));
+        for(int i=0; i<entries.Count; i++)
+        {
+            PlayerList.SetChildIndex(entries[i], i);
+        }
+    }
+
+    // LOBBY FUNCTIONS
+
     void OnChatMessage(Friend friend, string message)
     {
-        if(Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Lobby.Data["guess"]))
+        if(CorrectPlayers.Contains(friend) && CorrectPlayers.Contains(new Friend(Game.SteamId)))
         {
-            CreateChatEntry(friend.Name, " guessed correctly!");
+            CreateChatEntry(friend.Name + ":", message);
+        }
+        else if(Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Lobby.Data["guess"]))
+        {
+            if(Lobby.Owner.Id == Game.SteamId)
+            {
+                CorrectGuess(friend);
+            }
         }
         else
         {
@@ -241,27 +417,10 @@ public partial class GameMenu
     {
         CreateChatEntry(friend.Name, " has joined the game.");
 
-        if(Lobby.Owner.Id != Game.SteamId)
-        {
-            LobbyState = (LOBBY_STATE)Enum.Parse(typeof(LOBBY_STATE), Lobby.Data["state"]);
-            StartingPlayers = ListFromString(Lobby.Data["players"]);
-            FinishedPlayers = ListFromString(Lobby.Data["played"]);
-            Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
-            Guess = Lobby.Data["guess"];
-
-            if(LobbyState == LOBBY_STATE.CHOOSING_WORD)
-            {
-                StartRound();
-            }
-            else if(LobbyState == LOBBY_STATE.PLAYING)
-            {
-                NetworkRequestCanvas();
-            }
-            else if(LobbyState == LOBBY_STATE.RESULTS)
-            {
-                ShowResults();
-            }
-        }
+        PlayerListEntry entry = PlayerList.AddChild<PlayerListEntry>();
+        entry.Player = friend;
+        entry.Lobby = Lobby;
+        entry.SetScore(GetPlayerScore(friend.Id));
     }
 
     void OnMemberLeave(Friend friend)
@@ -273,6 +432,18 @@ public partial class GameMenu
             if(friend.Id == Drawing.Id && (LobbyState == LOBBY_STATE.PLAYING || LobbyState == LOBBY_STATE.CHOOSING_WORD))
             {
                 NextRound();
+            }
+        }
+
+        foreach(var child in PlayerList.Children)
+        {
+            if(child is PlayerListEntry entry)
+            {
+                if(entry.Player.Id == friend.Id)
+                {
+                    entry.Delete();
+                    break;
+                }
             }
         }
     }
@@ -296,6 +467,20 @@ public partial class GameMenu
 	public override void Tick()
 	{
 		Lobby.ReceiveMessages(OnNetworkMessage);
+
+        if(GameTimer > 0f)
+        {
+            GameTimer -= Time.Delta;
+            if(GameTimer < 0f){
+                
+                if(Lobby.Owner.Id == Game.SteamId)
+                {
+                    RevealAnswer();
+                }
+
+                GameTimer = 0f;
+            }
+        }
 	}
 
 	// DRAWING FUNCTIONS
@@ -367,7 +552,7 @@ public partial class GameMenu
 
     protected override int BuildHash()
     {
-        return HashCode.Combine(LogoClass(), Lobby.MemberCount);
+        return HashCode.Combine(LogoClass(), Lobby.MemberCount, MathF.Floor(GameTimer));
     }
 
 
@@ -386,17 +571,11 @@ public partial class GameMenu
         switch((LOBBY_MESSAGE)messageId)
         {
             case LOBBY_MESSAGE.START_ROUND:
-                ushort playerCount = data.Read<ushort>();
                 long drawingId = data.Read<long>();
                 Drawing = new Friend(drawingId);
-                StartingPlayers.Clear();
-                FinishedPlayers.Clear();
-                for(var i=1; i<playerCount; i++)
-                {
-                    long id = data.Read<long>();
-                    Friend friend = new Friend(id);
-                    StartingPlayers.Add(friend);
-                }
+                StartingPlayers = ListFromString(Lobby.Data["players"]);
+                if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
+                else FinishedPlayers?.Clear();
                 StartRound();
                 break;
             
@@ -408,6 +587,10 @@ public partial class GameMenu
                     guessBytes[i] = data.Read<byte>();
                 }
                 Guess = System.Text.Encoding.Unicode.GetString(guessBytes);
+                if(Lobby.Owner.Id == Game.SteamId)
+                {
+                    Lobby.SetData("guess", Guess);
+                }
                 StartDrawing();
                 break;
 
@@ -437,7 +620,10 @@ public partial class GameMenu
             
             case LOBBY_MESSAGE.SEND_CANVAS:
                 if(LobbyState != LOBBY_STATE.PLAYING) break;
-                if(Canvas is not Texture) break;
+                if(Canvas is not Texture)
+                {
+                    ResetCanvas();
+                }
 
                 int pixelCount = data.Read<int>();
                 Color32[] pixels = new Color32[pixelCount];
@@ -448,6 +634,36 @@ public partial class GameMenu
                 Canvas.Update(pixels);
                 CanvasPanel.SetTexture(Canvas);
                 StateHasChanged();
+
+                Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
+                StartingPlayers = ListFromString(Lobby.Data["players"]);
+                if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
+                else FinishedPlayers?.Clear();
+                Guess = Lobby.Data["guess"];
+                StartDrawing();
+                break;
+
+            case LOBBY_MESSAGE.CORRECT_GUESS:
+                if(LobbyState != LOBBY_STATE.PLAYING) break;
+
+                long playerId = data.Read<long>();
+                Friend player = new Friend(playerId);
+                long playerScore = data.Read<long>();
+                long drawerId = data.Read<long>();
+                Friend drawing = new Friend(drawerId);
+                long drawingScore = data.Read<long>();
+
+                CreateChatEntry(player.Name, " guessed correctly!");
+
+                GivePlayerScore(player.Id, playerScore, false);
+                GivePlayerScore(drawing.Id, drawingScore, false);
+                UpdatePlayerOrder();
+
+                if(Lobby.Owner.Id != Game.SteamId)
+                {
+                    if(Lobby.Data.ContainsKey("timer")) GameTimer = float.Parse(Lobby.Data["timer"]);
+                }
+
                 break;
         }
     }
@@ -455,15 +671,9 @@ public partial class GameMenu
     void NetworkStartRound()
     {
         Log.Info("Starting on the network");
-        ushort playerCount = (ushort)(StartingPlayers.Count + 1);
-        ByteStream data = ByteStream.Create(4 + (8 * playerCount));
+        ByteStream data = ByteStream.Create(10);
         data.Write((ushort)LOBBY_MESSAGE.START_ROUND);
-        data.Write(playerCount);
         data.Write(Drawing.Id);
-        for(int i=0; i<StartingPlayers.Count; i++)
-        {
-            data.Write(StartingPlayers[i].Id);
-        }
 
         Lobby.BroadcastMessage(data);
     }
@@ -505,6 +715,7 @@ public partial class GameMenu
         ByteStream data = ByteStream.Create(10);
         data.Write((ushort)LOBBY_MESSAGE.REQUEST_CANVAS);
         data.Write((long)Game.SteamId);
+
         Lobby.OwnerMessage(data);
     }
 
@@ -525,5 +736,20 @@ public partial class GameMenu
         }
 
         Lobby.SendMessage(friend, data);
+    }
+
+    void NetworkCorrectGuess(Friend friend, long playerScore, long drawingScore)
+    {
+        if(Lobby.Owner.Id != Game.SteamId) return;
+        if(LobbyState != LOBBY_STATE.PLAYING) return;
+
+        ByteStream data = ByteStream.Create(34);
+        data.Write((ushort)LOBBY_MESSAGE.CORRECT_GUESS);
+        data.Write((long)friend.Id);
+        data.Write((long)playerScore);
+        data.Write((long)Drawing.Id);
+        data.Write((long)drawingScore);
+
+        Lobby.BroadcastMessage(data);
     }
 }

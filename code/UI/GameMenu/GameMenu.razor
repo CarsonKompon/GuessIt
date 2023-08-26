@@ -16,7 +16,7 @@
         
         <div class="game-header">
             <div class="game-info">
-                <div class="timer">28</div>
+                <div class="timer">@MathF.Floor(GameTimer)</div>
                 <div class="round">Round 1 of 3</div>
             </div>
 
@@ -37,25 +37,8 @@
             <div class="player-list">
                 <p class="header">Players</p>
 
-                <div class="players">
+                <div @ref="PlayerList" class="players">
 
-                    @foreach(var player in Lobby.Members)
-                    {
-                        <div class="player">
-                            <div class="avatar">
-                                <image texture=@($"avatar:{@player.Id}") />
-                                @if(player.Id == Lobby.Owner.Id)
-                                {
-                                    <img src="ui/host_frame.png" />
-                                }
-                            </div>
-                            <div class="info">
-                                <div class="player-name">@player.Name</div>
-                                <div class="player-score">Score: 0</div>
-                            </div>
-                            <div class="rank">##1</div>
-                        </div>
-                    }
                 </div>
                 
 

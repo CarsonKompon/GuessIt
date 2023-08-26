@@ -1,0 +1,39 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root class="player">
+    <div class="avatar">
+        <image texture=@($"avatar:{@Player.Id}") />
+        @if(Player.Id == Lobby.Owner.Id)
+        {
+            <img src="ui/host_frame.png" />
+        }
+    </div>
+    <div class="info">
+        <div class="player-name">@Player.Name</div>
+        <div class="player-score">Score: @Score</div>
+    </div>
+    <div class="rank">##1</div>
+</root>
+
+@code
+{
+    public Friend Player { get; set; }
+    public Sandbox.Menu.ILobby Lobby { get; set; }
+
+    long Score { get; set; } = 0;
+
+    public void SetScore(long score)
+    {
+        Score = score;
+    }
+
+    protected override int BuildHash()
+    {
+        return HashCode.Combine(Score);
+    }
+}
