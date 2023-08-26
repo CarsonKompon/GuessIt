@@ -4,12 +4,25 @@ GameLetter
     font-weight: black;
     font-family: AzeretMono;
     width: 32px;
-    opacity: 1;
-    top: 0px;
-    transition: all 0.5s ease-in-out;
+    height: 100px;
+    top: -32px;
+    opacity: 0;
+    animation: fade-in-top 0.25s ease-in-out;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+}
 
-    &:intro
+@keyframes fade-in-top
+{
+    0%
     {
+        top: -32px;
         opacity: 0;
+    }
+
+    100%
+    {
+        top: 0px;
+        opacity: 1;
     }
 }

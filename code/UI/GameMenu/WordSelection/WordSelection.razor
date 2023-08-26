@@ -1,0 +1,79 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System;
+@using System.Collections.Generic;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root>
+
+    <div class="content">
+        <p class="header">Choose a word!</p>
+        <div class="words">
+            <div class="word easy" onclick=@ChooseEasy>@EasyWord</div>
+            <div class="word medium" onclick=@ChooseMedium>@MediumWord</div>
+            <div class="word hard" onclick=@ChooseHard>@HardWord</div>
+        </div>
+        <div class="timer">
+            <div class="timer-bar">
+                <div class="timer-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+</root>
+
+@code
+{
+    private string EasyWord { get; set; } = "Elephant";
+    private string MediumWord { get; set; } = "Big Bang";
+    private string HardWord { get; set; } = "Super Crunky: On Ice";
+
+    private RealTimeSince Timer = 0f;
+
+    protected override void OnAfterTreeRender(bool firstRender)
+    {
+        base.OnAfterTreeRender(firstRender);
+
+        if (firstRender)
+        {
+            Timer = 0f;
+
+
+        }
+    }
+
+    public override void Tick()
+    {
+        base.Tick();
+
+        if (Timer > 15f)
+        {
+            ChooseRandom();
+        }
+    }
+
+    void ChooseEasy() { Choose(EasyWord); }
+    void ChooseMedium() { Choose(MediumWord); }
+    void ChooseHard() { Choose(HardWord); }
+
+    void Choose(string word)
+    {
+        Log.Info($"You chose {word}!");
+
+        GuessIt.Instance.GameMenu.ChooseWord(word);
+        this.Delete();
+    }
+
+    void ChooseRandom()
+    {
+        var random = new Random();
+        var words = new List<string> { EasyWord, MediumWord, HardWord };
+        var word = words[random.Next(words.Count)];
+
+        Choose(word);
+    }
+
+    
+}

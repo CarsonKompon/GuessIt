@@ -1,5 +1,7 @@
 @using Sandbox;
 @using Sandbox.UI;
+@using System;
+@using System.Collections.Generic;
 @attribute [StyleSheet]
 
 @namespace GuessIt
@@ -9,6 +11,7 @@
     enum LOBBY_STATE
     {
         WAITING_FOR_PLAYERS,
+        CHOOSING_WORD,
         PLAYING,
         RESULTS
     }
@@ -16,14 +19,18 @@
     enum LOBBY_MESSAGE
     {
         NONE,
-        DRAW
+        START_ROUND,
+        CHOOSE_WORD,
+        DRAW,
+        REQUEST_CANVAS,
+        REVEAL_WORD
     }
 }
 
 <root>
 
     <div class="header">
-        <img src="ui/logo.png" class="logo" />
+        <img src="ui/logo.png" class="logo @LogoClass()" />
     </div>
 
     <div class="big-container">
@@ -39,7 +46,10 @@
             </div>
 
             <div class="game-settings">
-                
+                @if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS)
+                {
+                    <button class="dev" onclick=@StartGame>Start Game</button>
+                }
             </div>
         </div>
 
@@ -72,8 +82,8 @@
 
             </div>
 
-            <div class="game-canvas">
-
+            <div @ref="CanvasContainer" class="game-canvas-container">
+                <GameCanvas @ref="CanvasPanel" />
             </div>
 
             <div class="chat-container">
@@ -93,83 +103,3 @@
     </div>
 
 </root>
-
-@code
-{
-    GameHeader Header { get; set; }
-    TextEntry ChatEntry { get; set; }
-    Panel ChatBox { get; set; }
-    string ChatText { get; set; }
-    int ChatIndex = 0;
-
-    protected override void OnAfterTreeRender(bool firstTime)
-    {
-        base.OnAfterTreeRender(firstTime);
-
-        if(firstTime)
-        {
-            Game.Menu.Lobby.OnChatMessage = OnChatMessage;
-            Game.Menu.Lobby.OnMemberEnter = OnMemberEnter;
-            Game.Menu.Lobby.OnMemberLeave = OnMemberLeave;
-
-            if(Game.Menu.Lobby.Owner.Id == Game.SteamId)
-            {
-                InitLobby();
-            }
-        }
-    }
-
-    void InitLobby()
-    {
-        Game.Menu.Lobby.SetData("state", LOBBY_STATE.WAITING_FOR_PLAYERS.ToString());
-        Game.Menu.Lobby.SetData("guess", "");
-        Game.Menu.Lobby.SetData("correct", "");
-    }
-
-
-
-    void SendChat()
-    {
-        Game.Menu.Lobby.SendChat(ChatText);
-        ChatEntry.Text = "";
-        ChatEntry.Focus();
-    }
-
-    void OnChatMessage(Friend friend, string message)
-    {
-        if(Game.Menu.Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Game.Menu.Lobby.Data["guess"]))
-        {
-            CreateChatEntry(friend.Name, " guessed correctly!");
-        }
-        else
-        {
-            CreateChatEntry(friend.Name + ":", message);
-        }
-    }
-
-    void OnMemberEnter(Friend friend)
-    {
-        CreateChatEntry(friend.Name, " has joined the game.");
-    }
-
-    void OnMemberLeave(Friend friend)
-    {
-        CreateChatEntry(friend.Name, " has left the game.");
-    }
-
-    void CreateChatEntry(string name, string message)
-    {
-        var entry = ChatBox.AddChild<ChatEntry>();
-        entry.SetMessage(name, message);
-
-        if(ChatBox.ChildrenCount > 256)
-        {
-            ChatBox.GetChild(ChatBox.ChildrenCount - 1).Delete();
-        }
-
-        Audio.Play("ui.chat.message" + (ChatIndex + 1));
-
-        ChatIndex = (ChatIndex + 1) % 2;
-    }
-
-}

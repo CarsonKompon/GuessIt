@@ -1,20 +1,20 @@
 @using Sandbox;
 @using Sandbox.UI;
+@using System;
 @attribute [StyleSheet]
 
 @namespace GuessIt
 
 <root>
-    <div class="header">Guess the following:</div>
+    @if(string.IsNullOrEmpty(Override))
+    {
+        <div class="header">@Header</div>
+    }
+    else
+    {
+        <div class="override">@Override</div>
+    }
     <div @ref="WordContainer" class="word">
-        <div class="letter">_</div>
-        <div class="letter">U</div>
-        <div class="letter">_</div>
-        <div class="letter">K</div>
-        <div class="letter space"></div>
-        <div class="letter">_</div>
-        <div class="letter">O</div>
-        <div class="letter">_</div>
     </div>
 </root>
 
@@ -25,20 +25,41 @@
     string Header = "Guess the following:";
     string Word = "BUCKAROO";
 
-    void SetOverride(string over)
+    public void SetOverride(string over)
     {
-        Word = over;
+        Override = over;
     }
 
-    void SetWord(string word, string header = "Guess the following:")
+    public void SetWord(string word, string header = "Guess the following:", bool visible = false)
     {
         Override = "";
         Word = word;
         Header = header;
+        
+        StateHasChanged();
 
         foreach(var child in WordContainer.Children)
         {
             child.Delete();
         }
+
+        for(int i=0; i<Word.Length; i++)
+        {
+            var letter = Word[i];
+            var letterPanel = WordContainer.AddChild<GameLetter>();
+            letterPanel.Style.AnimationDelay = 0.08f * i;
+            letterPanel.Letter = letter.ToString();
+            if(letter == ' ')
+            {
+                letterPanel.AddClass("space");
+                letterPanel.Hidden = false;
+            }
+            if(visible) letterPanel.Hidden = false;
+        }
     }
+
+        protected override int BuildHash()
+        {
+            return HashCode.Combine(Override, Word, Header);
+        }
 }

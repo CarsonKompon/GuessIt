@@ -1,14 +1,21 @@
 @using Sandbox;
 @using Sandbox.UI;
+@using System;
 @attribute [StyleSheet]
 
 @namespace GuessIt
 
 <root>
-    <div class="letter">@(Letter)</div>
+    <div class="letter">@(Hidden ? "_" : Letter)</div>
 </root>
 
 @code
 {
-    string Letter { get; set; } = "";
+    public string Letter { get; set; } = "";
+    public bool Hidden { get; set; } = true;
+
+    protected override int BuildHash()
+    {
+        return HashCode.Combine(Letter, Hidden);
+    }
 }
