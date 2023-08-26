@@ -45,13 +45,11 @@
 
     private async void FetchLobbies()
     {
-        Log.Info("Wow!");
 
         Loading = true;
 
-        // get lobbies
         var lobbies = await Game.Menu.QueryLobbiesAsync(null, 1);
-        //lobbies = lobbies.OrderByDescending( x => x.MemberCount ).ToArray();
+        lobbies = lobbies.OrderByDescending( x => x.MemberCount ).ToArray();
 
         Lobbies.Clear();
         foreach ( var lobby in lobbies )

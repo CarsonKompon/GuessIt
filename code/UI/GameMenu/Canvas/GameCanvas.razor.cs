@@ -48,7 +48,6 @@ public partial class GameCanvas
 
         if (IsDrawing)
         {
-            Log.Info("Moving Mouse");
             bool returnVal = AddPoint(e.LocalPosition);
             if(returnVal == false)
             {
@@ -81,7 +80,6 @@ public partial class GameCanvas
 	bool AddPoint(Vector2 vec2)
     {
         if(!IsDrawing) return false;
-        Log.Info("adding point");
         Vector2 pos = (vec2 / Canvas.Box.Rect.Size) * new Vector2(320, 240);
         if(pos.x < 0 || pos.x > 320 || pos.y < 0 || pos.y > 240) return false;
         DrawingPoints.Add(pos);

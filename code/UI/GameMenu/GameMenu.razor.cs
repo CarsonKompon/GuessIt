@@ -1,4 +1,5 @@
 using Sandbox;
+using Sandbox.Menu;
 using Sandbox.UI;
 using System;
 using System.Collections.Generic;
@@ -24,20 +25,23 @@ public partial class GameMenu
     string ChatText { get; set; }
     int ChatIndex = 0;
 
+    // Lobby Variables
+    public ILobby Lobby { get; set; } = Game.Menu.Lobby;
+
     protected override void OnAfterTreeRender(bool firstTime)
     {
         base.OnAfterTreeRender(firstTime);
 
         if(firstTime)
         {
-            Game.Menu.Lobby.OnChatMessage = OnChatMessage;
-            Game.Menu.Lobby.OnMemberEnter = OnMemberEnter;
-            Game.Menu.Lobby.OnMemberLeave = OnMemberLeave;
-            Game.Menu.Lobby.ReceiveMessages(OnNetworkMessage);
+            Lobby.OnChatMessage = OnChatMessage;
+            Lobby.OnMemberEnter = OnMemberEnter;
+            Lobby.OnMemberLeave = OnMemberLeave;
+            Lobby.ReceiveMessages(OnNetworkMessage);
 
             Header.SetOverride("Waiting for players...");
 
-            if(Game.Menu.Lobby.Owner.Id == Game.SteamId)
+            if(Lobby.Owner.Id == Game.SteamId)
             {
                 InitLobby();
             }
@@ -46,28 +50,28 @@ public partial class GameMenu
 
     void InitLobby()
     {
-        Game.Menu.Lobby.SetData("state", LOBBY_STATE.WAITING_FOR_PLAYERS.ToString());
-        Game.Menu.Lobby.SetData("drawing", "");
-        Game.Menu.Lobby.SetData("players", "");
-        Game.Menu.Lobby.SetData("played", "");
-        Game.Menu.Lobby.SetData("guess", "");
-        Game.Menu.Lobby.SetData("correct", "");
+        Lobby.SetData("state", LOBBY_STATE.WAITING_FOR_PLAYERS.ToString());
+        Lobby.SetData("drawing", "");
+        Lobby.SetData("players", "");
+        Lobby.SetData("played", "");
+        Lobby.SetData("guess", "");
+        Lobby.SetData("correct", "");
     }
 
     void StartGame()
     {
-        if(Game.Menu.Lobby.Owner.Id != Game.SteamId) return;
+        if(Lobby.Owner.Id != Game.SteamId) return;
         if(LobbyState != LOBBY_STATE.WAITING_FOR_PLAYERS) return;
 
         StartingPlayers.Clear();
-        foreach(var friend in Game.Menu.Lobby.Members)
+        foreach(var friend in Lobby.Members)
         {
             StartingPlayers.Add(friend);
         }
         // Randomize the order of the list
         StartingPlayers.Sort((a, b) => (new Random()).Next(0, 2) == 0 ? -1 : 1);
-        Game.Menu.Lobby.SetData("players", ListString(StartingPlayers));
-        Game.Menu.Lobby.SetData("played", "");
+        Lobby.SetData("players", ListString(StartingPlayers));
+        Lobby.SetData("played", "");
 
         // Get the first player
         Drawing = StartingPlayers[0];
@@ -95,9 +99,9 @@ public partial class GameMenu
 
         Header.SetOverride(Drawing.Name + " is choosing a word...");
 
-        if(Game.Menu.Lobby.Owner.Id == Game.SteamId)
+        if(Lobby.Owner.Id == Game.SteamId)
         {
-            Game.Menu.Lobby.SetData("state", LOBBY_STATE.CHOOSING_WORD.ToString());
+            Lobby.SetData("state", LOBBY_STATE.CHOOSING_WORD.ToString());
         }
 
         // Reset the canvas to a plain white texture
@@ -117,7 +121,7 @@ public partial class GameMenu
         if(LobbyState != LOBBY_STATE.CHOOSING_WORD) return;
         
         Guess = word;
-        Game.Menu.Lobby.SetData("guess", Guess);
+        Lobby.SetData("guess", Guess);
 
         ResetCanvas();
 
@@ -138,9 +142,9 @@ public partial class GameMenu
             Header.SetWord(Guess);
         }
 
-        if(Game.Menu.Lobby.Owner.Id == Game.SteamId)
+        if(Lobby.Owner.Id == Game.SteamId)
         {
-            Game.Menu.Lobby.SetData("state", LOBBY_STATE.PLAYING.ToString());
+            Lobby.SetData("state", LOBBY_STATE.PLAYING.ToString());
         }
 
     }
@@ -152,7 +156,7 @@ public partial class GameMenu
 
     void NextRound()
     {
-        if(Game.Menu.Lobby.Owner.Id != Game.SteamId) return;
+        if(Lobby.Owner.Id != Game.SteamId) return;
         if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS || LobbyState == LOBBY_STATE.RESULTS) return;
 
         if(StartingPlayers.Count > 0)
@@ -161,7 +165,7 @@ public partial class GameMenu
             StartingPlayers.RemoveAt(0);
             LobbyState = LOBBY_STATE.CHOOSING_WORD;
             Header.SetOverride(Drawing.Name + " is choosing a word...");
-            Game.Menu.Lobby.SetData("played", ListString(FinishedPlayers));
+            Lobby.SetData("played", ListString(FinishedPlayers));
             CanvasContainer.AddChild<WordSelection>();
         }
         else
@@ -202,14 +206,14 @@ public partial class GameMenu
 
     void SendChat()
     {
-        Game.Menu.Lobby.SendChat(ChatText);
+        Lobby.SendChat(ChatText);
         ChatEntry.Text = "";
         ChatEntry.Focus();
     }
 
     void OnChatMessage(Friend friend, string message)
     {
-        if(Game.Menu.Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Game.Menu.Lobby.Data["guess"]))
+        if(Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Lobby.Data["guess"]))
         {
             CreateChatEntry(friend.Name, " guessed correctly!");
         }
@@ -223,13 +227,13 @@ public partial class GameMenu
     {
         CreateChatEntry(friend.Name, " has joined the game.");
 
-        if(Game.Menu.Lobby.Owner.Id != Game.SteamId)
+        if(Lobby.Owner.Id != Game.SteamId)
         {
-            LobbyState = (LOBBY_STATE)Enum.Parse(typeof(LOBBY_STATE), Game.Menu.Lobby.Data["state"]);
-            StartingPlayers = ListFromString(Game.Menu.Lobby.Data["players"]);
-            FinishedPlayers = ListFromString(Game.Menu.Lobby.Data["played"]);
-            Drawing = new Friend(long.Parse(Game.Menu.Lobby.Data["drawing"]));
-            Guess = Game.Menu.Lobby.Data["guess"];
+            LobbyState = (LOBBY_STATE)Enum.Parse(typeof(LOBBY_STATE), Lobby.Data["state"]);
+            StartingPlayers = ListFromString(Lobby.Data["players"]);
+            FinishedPlayers = ListFromString(Lobby.Data["played"]);
+            Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
+            Guess = Lobby.Data["guess"];
 
             if(LobbyState == LOBBY_STATE.CHOOSING_WORD)
             {
@@ -250,7 +254,7 @@ public partial class GameMenu
     {
         CreateChatEntry(friend.Name, " has left the game.");
 
-        if(Game.Menu.Lobby.Owner.Id == Game.SteamId)
+        if(Lobby.Owner.Id == Game.SteamId)
         {
             if(friend.Id == Drawing.Id && (LobbyState == LOBBY_STATE.PLAYING || LobbyState == LOBBY_STATE.CHOOSING_WORD))
             {
@@ -296,6 +300,9 @@ public partial class GameMenu
     
     public void Draw(Vector2 point, Color color, int size, bool send = true)
     {
+        if(Canvas is null) return;
+        if(LobbyState != LOBBY_STATE.PLAYING) return;
+        
         // Draw a circle of radius size at point with color color
         Canvas.Update(color.ToColor32(), new Rect(point.x - size, point.y - size, size * 2, size * 2));
         
@@ -337,7 +344,7 @@ public partial class GameMenu
 
     protected override int BuildHash()
     {
-        return HashCode.Combine(LogoClass(), Game.Menu.Lobby.MemberCount);
+        return HashCode.Combine(LogoClass(), Lobby.MemberCount);
     }
 
 
@@ -348,6 +355,8 @@ public partial class GameMenu
         ByteStream data = msg.Data;
 
         ushort messageId = data.Read<ushort>();
+
+        Log.Info((LOBBY_MESSAGE)messageId);
 
         switch((LOBBY_MESSAGE)messageId)
         {
@@ -405,7 +414,7 @@ public partial class GameMenu
             data.Write(StartingPlayers[i].Id);
         }
 
-        Game.Menu.Lobby.BroadcastMessage(data);
+        Lobby.BroadcastMessage(data);
     }
 
     void NetworkChooseWord()
@@ -420,7 +429,7 @@ public partial class GameMenu
             data.Write(guessBytes[i]);
         }
 
-        Game.Menu.Lobby.BroadcastMessage(data);
+        Lobby.BroadcastMessage(data);
     }
 
     public void NetworkDraw(List<Vector2> points, Color color, int size)
@@ -436,6 +445,6 @@ public partial class GameMenu
             data.Write((ushort)points[i].y);
         }
 
-        Game.Menu.Lobby.BroadcastMessage(data);
+        Lobby.BroadcastMessage(data);
     }
 }

@@ -11,7 +11,7 @@
 
     @if(InGame)
     {
-        <GameMenu @ref="GameMenu" />
+        <GameMenu Lobby=@Lobby @ref="GameMenu" />
     }
     else
     {
@@ -22,6 +22,7 @@
 
 @code
 {
+    public Sandbox.Menu.ILobby Lobby { get; set; }
     public static GuessIt Instance;
 
     public GameMenu GameMenu { get; set; }
@@ -36,8 +37,9 @@
         if(firstTime) Instance = this;
     }
 
-    public static void ShowGame()
+    public static void ShowGame(Sandbox.Menu.ILobby lobby)
     {
+        Instance.Lobby = lobby;
         Instance.InGame = true;
     }
 

@@ -46,7 +46,7 @@
             </div>
 
             <div class="game-settings">
-                @if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS && Game.Menu.Lobby.Owner.Id == Game.SteamId)
+                @if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS && Lobby.Owner.Id == Game.SteamId)
                 {
                     <button class="dev" onclick=@StartGame>Start Game</button>
                 }
@@ -60,12 +60,12 @@
 
                 <div class="players">
 
-                    @foreach(var player in Game.Menu.Lobby.Members)
+                    @foreach(var player in Lobby.Members)
                     {
                         <div class="player">
                             <div class="avatar">
                                 <image texture=@($"avatar:{@player.Id}") />
-                                @if(player.Id == Game.Menu.Lobby.Owner.Id)
+                                @if(player.Id == Lobby.Owner.Id)
                                 {
                                     <img src="ui/host_frame.png" />
                                 }
