@@ -79,7 +79,9 @@ public partial class GameCanvas
 
 	bool AddPoint(Vector2 vec2)
     {
+        if(GuessIt.Instance.GameMenu.Drawing.Id != Game.SteamId) return false;
         if(!IsDrawing) return false;
+
         Vector2 pos = (vec2 / Canvas.Box.Rect.Size) * new Vector2(320, 240);
         if(pos.x < 0 || pos.x > 320 || pos.y < 0 || pos.y > 240) return false;
         DrawingPoints.Add(pos);

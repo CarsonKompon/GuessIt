@@ -3,8 +3,28 @@ using Sandbox.Menu;
 using Sandbox.UI;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GuessIt;
+
+enum LOBBY_STATE
+{
+    WAITING_FOR_PLAYERS,
+    CHOOSING_WORD,
+    PLAYING,
+    RESULTS
+}
+
+enum LOBBY_MESSAGE
+{
+    NONE,
+    START_ROUND,
+    CHOOSE_WORD,
+    DRAW,
+    REQUEST_CANVAS,
+    SEND_CANVAS,
+    REVEAL_WORD
+}
 
 public partial class GameMenu
 {
@@ -12,7 +32,7 @@ public partial class GameMenu
     LOBBY_STATE LobbyState = LOBBY_STATE.WAITING_FOR_PLAYERS;
     List<Friend> StartingPlayers = new List<Friend>();
     List<Friend> FinishedPlayers = new List<Friend>();
-    Friend Drawing;
+    public Friend Drawing;
     Texture Canvas;
     string Guess = "";
 
@@ -148,11 +168,6 @@ public partial class GameMenu
 
     }
 
-    void RequestCanvas()
-    {
-
-    }
-
     void NextRound()
     {
         if(Lobby.Owner.Id != Game.SteamId) return;
@@ -240,7 +255,7 @@ public partial class GameMenu
             }
             else if(LobbyState == LOBBY_STATE.PLAYING)
             {
-                RequestCanvas();
+                NetworkRequestCanvas();
             }
             else if(LobbyState == LOBBY_STATE.RESULTS)
             {
@@ -320,6 +335,9 @@ public partial class GameMenu
 
     public void Draw(List<Vector2> points, Color color, int size)
     {
+        if(Canvas is null) return;
+        if(LobbyState != LOBBY_STATE.PLAYING) return;
+
         // Draw lines of radius size between each point with color color
         for(int i=0; i<points.Count - 1; i++)
         {
@@ -406,6 +424,31 @@ public partial class GameMenu
                 }
                 Draw(points, color, size);
                 break;
+            
+            case LOBBY_MESSAGE.REQUEST_CANVAS:
+                if(Lobby.Owner.Id == Game.SteamId && LobbyState == LOBBY_STATE.PLAYING)
+                {
+                    long friendId = data.Read<long>();
+                    Friend friend = new Friend(friendId);
+                    if(!Lobby.Members.Contains(friend)) break;
+                    NetworkSendCanvas(friend);
+                }
+                break;
+            
+            case LOBBY_MESSAGE.SEND_CANVAS:
+                if(LobbyState != LOBBY_STATE.PLAYING) break;
+                if(Canvas is not Texture) break;
+
+                int pixelCount = data.Read<int>();
+                Color32[] pixels = new Color32[pixelCount];
+                for(int i=0; i<pixelCount; i++)
+                {
+                    pixels[i] = data.Read<Color32>();
+                }
+                Canvas.Update(pixels);
+                CanvasPanel.SetTexture(Canvas);
+                StateHasChanged();
+                break;
         }
     }
 
@@ -454,5 +497,33 @@ public partial class GameMenu
         }
 
         Lobby.BroadcastMessage(data);
+    }
+
+    void NetworkRequestCanvas()
+    {
+        Header.SetOverride("Loading...");
+        ByteStream data = ByteStream.Create(10);
+        data.Write((ushort)LOBBY_MESSAGE.REQUEST_CANVAS);
+        data.Write((long)Game.SteamId);
+        Lobby.OwnerMessage(data);
+    }
+
+    void NetworkSendCanvas(Friend friend)
+    {
+        if(LobbyState != LOBBY_STATE.PLAYING) return;
+        if(Lobby.Owner.Id != Game.SteamId) return;
+        if(Canvas is not Texture) return;
+
+        Color32[] pixels = Canvas.GetPixels();
+
+        ByteStream data = ByteStream.Create(6 + (pixels.Length * 4));
+        data.Write((ushort)LOBBY_MESSAGE.SEND_CANVAS);
+        data.Write((int)pixels.Length);
+        for(int i=0; i<pixels.Length; i++)
+        {
+            data.Write(pixels[i]);
+        }
+
+        Lobby.SendMessage(friend, data);
     }
 }
