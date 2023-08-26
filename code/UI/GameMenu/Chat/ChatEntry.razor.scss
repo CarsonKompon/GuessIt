@@ -23,4 +23,14 @@ ChatEntry
     {
         color: limegreen;
     }
+
+    &.join-message
+    {
+        color: rgb(0, 110, 255);
+    }
+
+    &.leave-message
+    {
+        color: rgb(255, 51, 0);
+    }
 }

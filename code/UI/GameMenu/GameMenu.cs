@@ -610,7 +610,7 @@ public partial class GameMenu
 
     void OnMemberEnter(Friend friend)
     {
-        CreateChatEntry(friend.Name, " has joined the game.");
+        CreateChatEntry(friend.Name, " has joined the game.", "join-message");
 
         PlayerListEntry entry = PlayerList.AddChild<PlayerListEntry>();
         entry.Player = friend;
@@ -631,7 +631,7 @@ public partial class GameMenu
 
     void OnMemberLeave(Friend friend)
     {
-        CreateChatEntry(friend.Name, " has left the game.");
+        CreateChatEntry(friend.Name, " has left the game.", "leave-message");
 
         if(Lobby.Owner.Id == Game.SteamId)
         {
@@ -672,6 +672,10 @@ public partial class GameMenu
                     FinishedPlayers.Add(friend);
                 }
             }
+            if(CorrectPlayers.Contains(friend))
+            {
+                CorrectPlayers.Remove(friend);
+            }
         }
         if(AllPlayers.Contains(friend))
         {
@@ -681,9 +685,16 @@ public partial class GameMenu
         {
             Header.SetOverride("Waiting for players...");
         }
-        if((LobbyState == LOBBY_STATE.CHOOSING_WORD || LobbyState == LOBBY_STATE.PLAYING) && AllPlayers.Count == 1 && Lobby.Owner.Id == Game.SteamId)
+        if((LobbyState == LOBBY_STATE.CHOOSING_WORD || LobbyState == LOBBY_STATE.PLAYING) && Lobby.Owner.Id == Game.SteamId)
         {
-            NetworkShowResults();
+            if(AllPlayers.Count == 1)
+            {
+                NetworkShowResults();
+            }
+            else if(CorrectPlayers.Count >= AllPlayers.Count - 1)
+            {
+                NetworkRevealAnswer();
+            }
         }
     }
 
