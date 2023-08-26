@@ -43,9 +43,9 @@ namespace GuessIt
             }
         }
 
-        public static string[] EasyWords;
-        public static string[] MediumWords;
-        public static string[] HardWords;
+        public static string[] EasyWords = new string[0];
+        public static string[] MediumWords = new string[0];
+        public static string[] HardWords = new string[0];
         public static string GetRandomWord(WORD_DIFFICULTY difficulty)
         {
             Random rand = new Random();
