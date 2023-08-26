@@ -50,6 +50,7 @@ public partial class GameMenu
     Panel ChatBox { get; set; }
     string ChatText { get; set; }
     int ChatIndex = 0;
+    RealTimeSince LastUpdate = 0f;
 
     // Lobby Variables
     public ILobby Lobby { get; set; } = Game.Menu.Lobby;
@@ -468,7 +469,7 @@ public partial class GameMenu
 	{
 		Lobby.ReceiveMessages(OnNetworkMessage);
 
-        if(GameTimer > 0f)
+        if(LobbyState == LOBBY_STATE.PLAYING && GameTimer > 0f)
         {
             GameTimer -= Time.Delta;
             if(GameTimer < 0f){
@@ -480,6 +481,15 @@ public partial class GameMenu
 
                 GameTimer = 0f;
             }
+        }
+
+        if(LastUpdate > 2f)
+        {
+            if(Lobby.Owner.Id == Game.SteamId)
+            {
+                Lobby.SetData("timer", GameTimer.ToString());
+            }
+            LastUpdate = 0f;
         }
 	}
 
