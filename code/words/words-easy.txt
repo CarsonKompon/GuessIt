@@ -419,3 +419,6 @@ Minecraft
 NFT
 Roblox
 Illuminati
+Gun
+Pistol
+AK-47

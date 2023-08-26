@@ -129,6 +129,11 @@ public partial class GameMenu
                 Audio.Play("ui.guess.correct");
                 UpdatePlayerClass(player, "correct");
 
+                if(player.Id == Game.SteamId)
+                {
+                    Sandbox.Services.Stats.Increment( "correct-guesses", 1 );
+                }
+
                 if(!CorrectPlayers.Contains(player)) CorrectPlayers.Add(player);
                 GivePlayerScore(player.Id, playerScore, false);
                 GivePlayerScore(drawing.Id, drawingScore, false);

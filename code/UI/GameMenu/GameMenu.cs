@@ -382,6 +382,22 @@ public partial class GameMenu
     {
         if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS) return;
 
+        long myScore = GetPlayerScore(Game.SteamId);
+        Sandbox.Services.Stats.SetValue("highscore", myScore);
+        long highestScore = 0;
+        foreach(var friend in AllPlayers)
+        {
+            var score = GetPlayerScore(friend.Id);
+            if(score > highestScore)
+            {
+                highestScore = score;
+            }
+        }
+        if(myScore == highestScore)
+        {
+            Sandbox.Services.Stats.Increment("wins", 1);
+        }
+
         LobbyState = LOBBY_STATE.WAITING_FOR_PLAYERS;
         if(AllPlayers.Count > 1)
         {

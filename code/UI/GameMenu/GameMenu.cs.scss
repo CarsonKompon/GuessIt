@@ -213,6 +213,11 @@ GameMenu
                     padding-left: 8px;
                     white-space: pre-wrap;
                     flex-shrink: 0;
+
+                    .placeholder
+                    {
+                        opacity: 0.5;
+                    }
                 }
             }
         }
