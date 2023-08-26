@@ -26,8 +26,9 @@ public partial class GameMenu
     public Friend Drawing;
     Texture Canvas;
     string Guess = "";
-    float GameTimer = 120f;
+    float GameTimer = 90f;
     List<Friend> AllPlayers = new List<Friend>();
+    bool hasDrawn = false;
 
     // UI Variables
     GameHeader Header { get; set; }
@@ -188,9 +189,12 @@ public partial class GameMenu
     {
         LobbyState = LOBBY_STATE.CHOOSING_WORD;
 
+        ClearPlayerClasses();
         CorrectPlayers.Clear();
         Header.SetOverride(Drawing.Name + " is choosing a word...");
         GameTimer = 15f;
+        UpdatePlayerClass(Drawing, "drawing");
+        hasDrawn = false;
 
         if(Lobby.Owner.Id == Game.SteamId)
         {
@@ -218,7 +222,7 @@ public partial class GameMenu
         
         Guess = word;
         Lobby.SetData("guess", Guess);
-        GameTimer = 120f;
+        GameTimer = 90f;
         
         ResetCanvas();
 
@@ -342,6 +346,7 @@ public partial class GameMenu
 
         LobbyState = LOBBY_STATE.RESULTS;
         Header.SetOverride("Results");
+        ClearPlayerClasses();
 
         // Sort leaderboard dictionary by value
         foreach(var friend in AllPlayers)
@@ -545,6 +550,35 @@ public partial class GameMenu
         }
     }
 
+    void UpdatePlayerClass(Friend friend, string classes)
+    {
+        foreach(var child in PlayerList.Children)
+        {
+            if(child is PlayerListEntry entry)
+            {
+                if(entry.Player.Id == friend.Id)
+                {
+                    entry.RemoveClass("drawing");
+                    entry.RemoveClass("correct");
+                    entry.AddClass(classes);
+                    break;
+                }
+            }
+        }
+    }
+
+    void ClearPlayerClasses()
+    {
+        foreach(var child in PlayerList.Children)
+        {
+            if(child is PlayerListEntry entry)
+            {
+                entry.RemoveClass("drawing");
+                entry.RemoveClass("correct");
+            }
+        }
+    }
+
     // LOBBY FUNCTIONS
 
     void OnChatMessage(Friend friend, string message)
@@ -687,7 +721,8 @@ public partial class GameMenu
                     ClockIndex = (ClockIndex + 1) % 2;
                 }
 
-                if(GameTimer <= 0f){
+                if(GameTimer <= 0f)
+                {
                     
                     if(Lobby.Owner.Id == Game.SteamId)
                     {
@@ -695,6 +730,14 @@ public partial class GameMenu
                     }
 
                     GameTimer = 0f;
+                }
+                else if(GameTimer <= 60f && !hasDrawn)
+                {
+                    if(Lobby.Owner.Id == Game.SteamId)
+                    {
+                        GameTimer = 0f;
+                        NetworkRevealAnswer();
+                    }
                 }
             }
             else if(Lobby.Owner.Id == Game.SteamId && GameTimer > -5f)
@@ -757,6 +800,7 @@ public partial class GameMenu
     {
         if(Canvas is null) return;
         if(LobbyState != LOBBY_STATE.PLAYING) return;
+        hasDrawn = true;
 
         // Draw a circle of radius size at point with color color
         Canvas.Update(color.ToColor32(), new Rect(point.x - size, point.y - size, size * 2, size * 2));

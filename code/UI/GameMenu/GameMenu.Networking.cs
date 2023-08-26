@@ -58,7 +58,7 @@ public partial class GameMenu
                 {
                     Lobby.SetData("guess", Guess);
                 }
-                GameTimer = 120f;
+                GameTimer = 90f;
                 StartDrawing();
                 break;
 
@@ -127,6 +127,7 @@ public partial class GameMenu
 
                 CreateChatEntry(player.Name, " guessed correctly!", "guess-correct");
                 Audio.Play("ui.guess.correct");
+                UpdatePlayerClass(player, "correct");
 
                 if(!CorrectPlayers.Contains(player)) CorrectPlayers.Add(player);
                 GivePlayerScore(player.Id, playerScore, false);

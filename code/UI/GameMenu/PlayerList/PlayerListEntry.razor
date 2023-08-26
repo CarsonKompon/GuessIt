@@ -7,10 +7,10 @@
 
 <root class="player">
     <div class="avatar">
-        <image texture=@($"avatar:{@Player.Id}") />
+        <image texture=@($"avatar:{@Player.Id}") class="pic" />
         @if(Player.Id == Lobby.Owner.Id)
         {
-            <img src="ui/host_frame.png" />
+            <img src="ui/host_frame.png" class="pic" />
         }
     </div>
     <div class="info">

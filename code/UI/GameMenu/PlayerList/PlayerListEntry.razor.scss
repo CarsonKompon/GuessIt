@@ -10,7 +10,7 @@ PlayerListEntry
         width: 64px;
         height: 64px;
 
-        img
+        .pic
         {
             position: absolute;
             top: 0px;
@@ -42,6 +42,8 @@ PlayerListEntry
         {
             font-size: 28px;
             font-weight: 500;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
         .player-score
@@ -64,6 +66,16 @@ PlayerListEntry
     &.odd
     {
         background-color: rgb(230, 230, 230);
+    }
+
+    &.drawing
+    {
+        background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(0, 0, 255, 0.5));
+    }
+
+    &.correct
+    {
+        background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(0, 255, 0, 0.5));
     }
 
 }
