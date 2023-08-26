@@ -37,7 +37,6 @@ public partial class GameMenu
             Lobby.OnChatMessage = OnChatMessage;
             Lobby.OnMemberEnter = OnMemberEnter;
             Lobby.OnMemberLeave = OnMemberLeave;
-            Lobby.ReceiveMessages(OnNetworkMessage);
 
             Header.SetOverride("Waiting for players...");
 
@@ -278,9 +277,15 @@ public partial class GameMenu
         ChatIndex = (ChatIndex + 1) % 2;
     }
 
-    // DRAWING FUNCTIONS
+	// TICK FUNCTION
+	public override void Tick()
+	{
+		Lobby.ReceiveMessages(OnNetworkMessage);
+	}
 
-    void ResetCanvas()
+	// DRAWING FUNCTIONS
+
+	void ResetCanvas()
     {
         if(Canvas is not null)
         {
@@ -302,7 +307,7 @@ public partial class GameMenu
     {
         if(Canvas is null) return;
         if(LobbyState != LOBBY_STATE.PLAYING) return;
-        
+
         // Draw a circle of radius size at point with color color
         Canvas.Update(color.ToColor32(), new Rect(point.x - size, point.y - size, size * 2, size * 2));
         
@@ -350,9 +355,11 @@ public partial class GameMenu
 
     // NETWORKING SHIT
 
-    void OnNetworkMessage(Sandbox.Menu.ILobby.NetworkMessage msg)
+    void OnNetworkMessage(ILobby.NetworkMessage msg)
     {
         ByteStream data = msg.Data;
+
+        Log.Info(msg.Source);
 
         ushort messageId = data.Read<ushort>();
 
@@ -404,6 +411,7 @@ public partial class GameMenu
 
     void NetworkStartRound()
     {
+        Log.Info("Starting on the network");
         ushort playerCount = (ushort)(StartingPlayers.Count + 1);
         ByteStream data = ByteStream.Create(4 + (8 * playerCount));
         data.Write((ushort)LOBBY_MESSAGE.START_ROUND);
