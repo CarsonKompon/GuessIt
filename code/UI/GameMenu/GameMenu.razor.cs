@@ -52,6 +52,7 @@ public partial class GameMenu
     Panel ChatBox { get; set; }
     string ChatText { get; set; }
     int ChatIndex = 0;
+    int ClockIndex = 0;
     RealTimeSince LastUpdate = 0f;
 
     // Lobby Variables
@@ -235,7 +236,6 @@ public partial class GameMenu
         long DrawingScore = 200;
         long PlayerScore = (long)MathF.Floor(Utils.Map(GameTimer, 120, 0, 1000, 800));
 
-
         CorrectPlayers.Add(friend);
         Lobby.SetData("correct", ListString(CorrectPlayers));
 
@@ -268,6 +268,15 @@ public partial class GameMenu
         Header.SetWord(Guess, "The word was:", true);
 
         CreateChatEntry("The word was: " + Guess, "");
+
+        if(CorrectPlayers.Contains(new Friend(Game.SteamId)))
+        {
+            Audio.Play("ui.reveal.correct");
+        }
+        else
+        {
+            Audio.Play("ui.reveal.wrong");
+        }
 
         GameTimer = 0;
     }
@@ -529,7 +538,15 @@ public partial class GameMenu
         {
             if(GameTimer > 0f)
             {
+                float previous = MathF.Floor(MathF.Max(GameTimer, 0));
                 GameTimer -= Time.Delta;
+
+                if(MathF.Floor(MathF.Max(GameTimer, 0)) != previous)
+                {
+                    Audio.Play("ui.clock.tick" + (ClockIndex + 1));
+                    ClockIndex = (ClockIndex + 1) % 2;
+                }
+
                 if(GameTimer <= 0f){
                     
                     if(Lobby.Owner.Id == Game.SteamId)
@@ -748,10 +765,15 @@ public partial class GameMenu
                 long drawingScore = data.Read<long>();
 
                 CreateChatEntry(player.Name, " guessed correctly!");
+                Audio.Play("ui.guess.correct");
 
                 GivePlayerScore(player.Id, playerScore, false);
                 GivePlayerScore(drawing.Id, drawingScore, false);
                 UpdatePlayerOrder();
+
+                float timer = GameTimer;
+                if(Lobby.Data.ContainsKey("timer")) timer = float.Parse(Lobby.Data["timer"]);
+                if(timer < GameTimer) GameTimer = timer;
 
                 if(Lobby.Owner.Id != Game.SteamId)
                 {
@@ -768,6 +790,14 @@ public partial class GameMenu
                 for(int i=0; i<byteLength; i++)
                 {
                     wordBytes[i] = data.Read<byte>();
+                }
+                if(Lobby.Data.ContainsKey("correct"))
+                {
+                    CorrectPlayers = ListFromString(Lobby.Data["correct"]);
+                }
+                else
+                {
+                    CorrectPlayers.Clear();
                 }
                 Guess = System.Text.Encoding.Unicode.GetString(wordBytes);
                 RevealAnswer();
