@@ -731,7 +731,7 @@ public partial class GameMenu
 
                     GameTimer = 0f;
                 }
-                else if(GameTimer <= 60f && !hasDrawn)
+                else if(GameTimer <= 60f && !hasDrawn && LobbyState == LOBBY_STATE.PLAYING)
                 {
                     if(Lobby.Owner.Id == Game.SteamId)
                     {
