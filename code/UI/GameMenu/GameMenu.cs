@@ -337,6 +337,13 @@ public partial class GameMenu
         Header.SetOverride("Results");
 
         // Sort leaderboard dictionary by value
+        foreach(var friend in AllPlayers)
+        {
+            if(!PlayerScores.ContainsKey(friend.Id))
+            {
+                PlayerScores.Add(friend.Id, 0);
+            }
+        }
         List<KeyValuePair<long, long>> list = PlayerScores.ToList();
         list.Sort((a, b) => b.Value.CompareTo(a.Value));
         Dictionary<Friend, long> leaderboard = new Dictionary<Friend, long>();
@@ -599,6 +606,21 @@ public partial class GameMenu
             }
         }
 
+        if(LobbyState == LOBBY_STATE.CHOOSING_WORD || LobbyState == LOBBY_STATE.PLAYING)
+        {
+            if(!PlayerScores.ContainsKey(friend.Id))
+            {
+                PlayerScores.Add(friend.Id, 0);
+            }
+            if(StartingPlayers.Contains(friend))
+            {
+                StartingPlayers.Remove(friend);
+                if(!FinishedPlayers.Contains(friend))
+                {
+                    FinishedPlayers.Add(friend);
+                }
+            }
+        }
         if(AllPlayers.Contains(friend))
         {
             AllPlayers.Remove(friend);
