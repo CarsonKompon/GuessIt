@@ -82,6 +82,17 @@ MainMenu
         transform: scale(1.1);
     }
 
+    .version
+    {
+        position: absolute;
+        bottom: 0px;
+        right: 0px;
+        font-size: 12px;
+        font-weight: 300;
+        color: white;
+        padding: 8px;
+    }
+
 }
 
 @keyframes background-scroll

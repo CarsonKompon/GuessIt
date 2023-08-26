@@ -107,10 +107,7 @@ public partial class GameMenu
                 CanvasPanel.SetTexture(Canvas);
                 StateHasChanged();
 
-                Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
-                StartingPlayers = ListFromString(Lobby.Data["players"]);
-                if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
-                else FinishedPlayers?.Clear();
+                GetLobbyPlayerData();
                 Guess = Lobby.Data["guess"];
                 StartDrawing();
                 break;
