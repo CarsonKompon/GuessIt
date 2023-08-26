@@ -89,9 +89,6 @@ public partial class GameMenu
     void JoinedLobby()
     {
         LobbyState = (LOBBY_STATE)Enum.Parse(typeof(LOBBY_STATE), Lobby.Data["state"]);
-        if(Lobby.Data.ContainsKey("players")) StartingPlayers = ListFromString(Lobby.Data["players"]);
-        if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
-        if(Lobby.Data.ContainsKey("drawing")) Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
         if(Lobby.Data.ContainsKey("guess")) Guess = Lobby.Data["guess"];
         if(Lobby.Data.ContainsKey("timer")) GameTimer = float.Parse(Lobby.Data["timer"]);
         if(Lobby.Data.ContainsKey("scores"))
@@ -104,6 +101,7 @@ public partial class GameMenu
                 PlayerScores.Add(long.Parse(scoreSplit[0]), long.Parse(scoreSplit[1]));
             }
         }
+        GetLobbyPlayerData();
 
         if(LobbyState == LOBBY_STATE.CHOOSING_WORD)
         {
@@ -116,6 +114,26 @@ public partial class GameMenu
         else if(LobbyState == LOBBY_STATE.RESULTS)
         {
             ShowResults();
+        }
+    }
+
+    void GetLobbyPlayerData()
+    {
+        if(Lobby.Data.ContainsKey("players")) StartingPlayers = ListFromString(Lobby.Data["players"]);
+        else StartingPlayers.Clear();
+        if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
+        else FinishedPlayers.Clear();
+        if(Lobby.Data.ContainsKey("drawing")) Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
+        foreach(var friend in FinishedPlayers)
+        {
+            if(StartingPlayers.Contains(friend))
+            {
+                StartingPlayers.Remove(friend);
+            }
+        }
+        if(StartingPlayers.Contains(Drawing))
+        {
+            StartingPlayers.Remove(Drawing);
         }
     }
 
@@ -283,6 +301,8 @@ public partial class GameMenu
         if(Lobby.Owner.Id != Game.SteamId) return;
         if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS || LobbyState == LOBBY_STATE.RESULTS) return;
 
+        Log.Info(StartingPlayers);
+
         if(StartingPlayers.Count > 0)
         {
             Drawing = StartingPlayers[0];
@@ -325,6 +345,7 @@ public partial class GameMenu
         if(Lobby.Owner.Id == Game.SteamId)
         {
             InitLobby();
+            NetworkEndGame();
         }
     }
 
@@ -471,17 +492,27 @@ public partial class GameMenu
 
     void OnChatMessage(Friend friend, string message)
     {
-        bool isDrawing = (LobbyState == LOBBY_STATE.CHOOSING_WORD || LobbyState == LOBBY_STATE.PLAYING) && Drawing.Id == Game.SteamId;
+        bool drawingState = (LobbyState == LOBBY_STATE.CHOOSING_WORD || LobbyState == LOBBY_STATE.PLAYING);
+        bool isDrawing = (Drawing.Id == friend.Id);
+        bool isCorrect = CorrectPlayers.Contains(friend);
+        bool imCorrect = CorrectPlayers.Contains(new Friend(Game.SteamId));
 
-        if(isDrawing || (CorrectPlayers.Contains(friend) && CorrectPlayers.Contains(new Friend(Game.SteamId))))
+        if(drawingState)
         {
-            CreateChatEntry(friend.Name + ":", message);
-        }
-        else if(Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Lobby.Data["guess"]))
-        {
-            if(Lobby.Owner.Id == Game.SteamId)
+            if(CorrectPlayers.Contains(friend))
             {
-                CorrectGuess(friend);
+            }
+            if(isDrawing || (!isCorrect && !imCorrect) || (isCorrect && imCorrect))
+            {
+                CreateChatEntry(friend.Name + ":", message, (isCorrect ? "post-game" : ""));
+            }
+
+            if(Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Lobby.Data["guess"]))
+            {
+                if(Lobby.Owner.Id == Game.SteamId)
+                {
+                    CorrectGuess(friend);
+                }
             }
         }
         else
@@ -526,10 +557,11 @@ public partial class GameMenu
         }
     }
 
-    void CreateChatEntry(string name, string message)
+    void CreateChatEntry(string name, string message, string styles = "")
     {
         var entry = ChatBox.AddChild<ChatEntry>();
         entry.SetMessage(name, message);
+        entry.AddClass(styles);
 
         if(ChatBox.ChildrenCount > 256)
         {

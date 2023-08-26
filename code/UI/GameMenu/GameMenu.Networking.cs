@@ -26,8 +26,6 @@ public partial class GameMenu
     {
         ByteStream data = msg.Data;
 
-        Log.Info(msg.Source);
-
         ushort messageId = data.Read<ushort>();
 
         Log.Info((LOBBY_MESSAGE)messageId);
@@ -37,9 +35,11 @@ public partial class GameMenu
             case LOBBY_MESSAGE.START_ROUND:
                 long drawingId = data.Read<long>();
                 Drawing = new Friend(drawingId);
-                StartingPlayers = ListFromString(Lobby.Data["players"]);
-                if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
-                else FinishedPlayers?.Clear();
+                GetLobbyPlayerData();
+                if(StartingPlayers.Contains(Drawing))
+                {
+                    StartingPlayers.Remove(Drawing);
+                }
                 StartRound();
                 break;
             
