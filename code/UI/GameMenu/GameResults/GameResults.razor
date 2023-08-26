@@ -1,0 +1,39 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System;
+@using System.Collections.Generic;
+@using System.Linq;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root>
+
+    <div class="content">
+        <p class="header">@(Winner.Name) won!</p>
+        <div class="leaderboard">
+            @for(int i=0; i<Leaderboard.Count; i++)
+            {
+                var item = Leaderboard.ElementAt(i);
+                <div class="leaderboard-item @(i % 2 == 1 ? "odd" : "")">
+                    <div class="rank">##@((i+1).ToString())</div>
+                    <div class="name">@item.Key.Name</div>
+                    <div class="score">@item.Value</div>
+                </div>
+            }
+        </div>
+    </div>
+
+</root>
+
+@code
+{
+    public Friend Winner { get; set; }
+    public Dictionary<Friend, long> Leaderboard { get; set; }
+
+    protected override int BuildHash()
+    {
+        return HashCode.Combine(Winner, Leaderboard.Count);
+    }
+    
+}

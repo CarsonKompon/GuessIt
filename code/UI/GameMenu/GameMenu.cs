@@ -123,7 +123,14 @@ public partial class GameMenu
         else StartingPlayers.Clear();
         if(Lobby.Data.ContainsKey("played")) FinishedPlayers = ListFromString(Lobby.Data["played"]);
         else FinishedPlayers.Clear();
-        if(Lobby.Data.ContainsKey("drawing")) Drawing = new Friend(long.Parse(Lobby.Data["drawing"]));
+        if(Lobby.Data.ContainsKey("drawing"))
+        {
+            string str = Lobby.Data["drawing"];
+            if(!string.IsNullOrEmpty(str))
+            {
+                Drawing = new Friend(long.Parse(str));
+            }
+        }
         foreach(var friend in FinishedPlayers)
         {
             if(StartingPlayers.Contains(friend))
@@ -322,12 +329,27 @@ public partial class GameMenu
 
     void ShowResults()
     {
-        if(Lobby.Owner.Id != Game.SteamId) return;
         if(LobbyState == LOBBY_STATE.RESULTS) return;
+
+        ResetCanvas();
 
         LobbyState = LOBBY_STATE.RESULTS;
         Header.SetOverride("Results");
-        
+
+        // Sort leaderboard dictionary by value
+        List<KeyValuePair<long, long>> list = PlayerScores.ToList();
+        list.Sort((a, b) => b.Value.CompareTo(a.Value));
+        Dictionary<Friend, long> leaderboard = new Dictionary<Friend, long>();
+        foreach(var pair in list)
+        {
+            leaderboard.Add(new Friend(pair.Key), pair.Value);
+        }
+
+        GameResults results = CanvasContainer.AddChild<GameResults>();
+        results.Winner = new Friend(list[0].Key);
+        results.Leaderboard = leaderboard;
+         
+
         GameTimer = 10f;
         
         if(Lobby.Owner.Id == Game.SteamId)
@@ -339,8 +361,22 @@ public partial class GameMenu
 
     void EndGame()
     {
+        if(LobbyState != LOBBY_STATE.WAITING_FOR_PLAYERS) return;
+        
         LobbyState = LOBBY_STATE.WAITING_FOR_PLAYERS;
         Header.SetOverride("Waiting for players...");
+
+        ResetCanvas();
+        PlayerScores.Clear();
+        UpdatePlayerOrder();
+
+        foreach(var child in CanvasContainer.Children)
+        {
+            if(child is GameResults || child is WordSelection)
+            {
+                child.Delete();
+            }
+        }
 
         if(Lobby.Owner.Id == Game.SteamId)
         {
@@ -499,9 +535,6 @@ public partial class GameMenu
 
         if(drawingState)
         {
-            if(CorrectPlayers.Contains(friend))
-            {
-            }
             if(isDrawing || (!isCorrect && !imCorrect) || (isCorrect && imCorrect))
             {
                 CreateChatEntry(friend.Name + ":", message, (isCorrect ? "post-game" : ""));

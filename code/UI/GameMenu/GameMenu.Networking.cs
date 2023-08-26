@@ -33,9 +33,9 @@ public partial class GameMenu
         switch((LOBBY_MESSAGE)messageId)
         {
             case LOBBY_MESSAGE.START_ROUND:
+                GetLobbyPlayerData();
                 long drawingId = data.Read<long>();
                 Drawing = new Friend(drawingId);
-                GetLobbyPlayerData();
                 if(StartingPlayers.Contains(Drawing))
                 {
                     StartingPlayers.Remove(Drawing);
@@ -77,7 +77,7 @@ public partial class GameMenu
                     ushort y = data.Read<ushort>();
                     points.Add(new Vector2(x, y));
                 }
-                Draw(points, color, size, true);
+                Draw(points, color, size);
                 break;
             
             case LOBBY_MESSAGE.REQUEST_CANVAS:
@@ -92,11 +92,8 @@ public partial class GameMenu
             
             case LOBBY_MESSAGE.SEND_CANVAS:
                 if(LobbyState != LOBBY_STATE.PLAYING) break;
-                if(Canvas is not Texture)
-                {
-                    ResetCanvas();
-                }
-
+                
+                ResetCanvas();
                 int pixelCount = data.Read<int>();
                 Color32[] pixels = new Color32[pixelCount];
                 for(int i=0; i<pixelCount; i++)
