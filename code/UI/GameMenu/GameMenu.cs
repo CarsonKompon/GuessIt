@@ -693,9 +693,9 @@ public partial class GameMenu
         entry.SetMessage(name, message);
         entry.AddClass(styles);
 
-        if(ChatBox.ChildrenCount > 256)
+        if(ChatBox.ChildrenCount > 1000)
         {
-            ChatBox.GetChild(ChatBox.ChildrenCount - 1).Delete();
+            ChatBox.GetChild(0).Delete();
         }
 
         Audio.Play("ui.chat.message" + (ChatIndex + 1));

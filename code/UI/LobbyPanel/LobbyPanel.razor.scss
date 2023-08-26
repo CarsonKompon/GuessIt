@@ -22,7 +22,11 @@ LobbyPanel
 
     .lobbies
     {
+        width: 100%;
+        flex-direction: column;
+        overflow-y: scroll;
         flex-grow: 1;
+        gap: 8px;
     }
 
     .no-lobbies
