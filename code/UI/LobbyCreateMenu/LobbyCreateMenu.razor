@@ -1,0 +1,92 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using Sandbox.MenuSystem;
+@using System;
+@using System.Collections.Generic;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root>
+
+    <div class="content">
+        <p class="header">Create a Lobby</p>
+        <div class="settings">
+            
+            <div class="setting">
+                <p class="title">Lobby Name:</p>
+                <TextEntry Value:bind=@LobbyName type="text" placeholder=@GetTitle() />
+            </div>
+
+            <div class="setting">
+                <p class="title">Max Players:</p>
+                <div class="slider">
+                    <SliderControl Value:bind="@MaxPlayers" Min=@(2) Max=@(16) Step=@(1) />
+                    <output>@MaxPlayers.ToString()</output>
+                </div>
+            </div>
+
+            <div class="setting">
+                <p class="title">Visibility:</p>
+                <DropDown @ref="VisibilityDropdown"></DropDown>
+            </div>
+
+        </div>
+        <div class="buttons">
+            <button onclick=@Create>Create</button>
+            <button onclick=@Close>Back</button>
+        </div>
+    </div>
+</root>
+
+@code
+{
+    string LobbyName { get; set; } = "";
+    int MaxPlayers { get; set; } = 12;
+
+    DropDown VisibilityDropdown { get; set; }
+
+    protected override void OnAfterTreeRender(bool firstTime)
+    {
+        base.OnAfterTreeRender(firstTime);
+
+        if(firstTime)
+        {
+            VisibilityDropdown.Options = new List<Option>();
+            VisibilityDropdown.Options.Add(new Sandbox.UI.Option("Public", GameLobby.AccessMode.Public));
+            VisibilityDropdown.Options.Add(new Sandbox.UI.Option("Friends Only", GameLobby.AccessMode.FriendsOnly));
+            VisibilityDropdown.Options.Add(new Sandbox.UI.Option("Invisible", GameLobby.AccessMode.Invisible));
+            VisibilityDropdown.Selected = VisibilityDropdown.Options[0];
+        }
+    }
+
+    void Create()
+    {
+        Game.Menu.Lobby.Title = LobbyName;
+        Game.Menu.Lobby.MaxMembers = MaxPlayers;
+        if(Game.Menu.Lobby is GameLobby gameLobby)
+        {
+            gameLobby.Access = (GameLobby.AccessMode)VisibilityDropdown.Selected.Value;
+        }
+        
+        GuessIt.ShowGame();
+        this.Delete();
+    }
+
+    void Close()
+    {
+        Game.Menu.Lobby.Leave();
+        this.Delete();
+    }
+
+    string GetTitle()
+    {
+        if(Game.Menu.Lobby == null) return "";
+        return Game.Menu.Lobby.Title;
+    }
+
+    protected override int BuildHash()
+    {
+        return HashCode.Combine(GetTitle());
+    }
+}

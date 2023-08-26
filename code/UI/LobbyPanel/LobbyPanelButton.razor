@@ -30,8 +30,9 @@
 
     async void JoinLobby()
     {
+        Log.Info(Lobby);
         bool joined = await Lobby.JoinAsync();
-        if(joined)
+        if(Game.Menu.Lobby == Lobby)
         {
             GuessIt.ShowGame();
         }

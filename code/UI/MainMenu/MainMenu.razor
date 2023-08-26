@@ -1,5 +1,6 @@
 @using Sandbox;
 @using Sandbox.UI;
+@using Sandbox.MenuSystem;
 @attribute [StyleSheet]
 
 @namespace GuessIt
@@ -27,10 +28,21 @@
 @code
 {
     HowToPlayMenu HowToPlayPopup;
+    LobbyCreateMenu CreateLobbyPopup;
 
     async void CreateLobby()
     {
+        if(CreateLobbyPopup.IsValid())
+        {
+            CreateLobbyPopup.Delete();
+        }
+        CreateLobbyPopup = AddChild<LobbyCreateMenu>();
+
+        Game.Menu.Lobby?.Leave();
         await Game.Menu.CreateLobbyAsync( 16 );
+        if(Game.Menu.Lobby is not GameLobby gameLobby) return;
+        gameLobby.Access = GameLobby.AccessMode.Private;
+        
     }
 
     void HowToPlay()
@@ -42,10 +54,5 @@
         HowToPlayPopup = AddChild<HowToPlayMenu>();
     }
 
-    [GameEvent.Menu.LobbyJoined]
-    void OnLobbyJoined()
-    {
-        GuessIt.ShowGame();
-    }
 
 }
