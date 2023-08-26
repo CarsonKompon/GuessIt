@@ -54,7 +54,14 @@ public partial class GameMenu
             Lobby.OnMemberEnter = OnMemberEnter;
             Lobby.OnMemberLeave = OnMemberLeave;
 
-            Header.SetOverride("Waiting for players...");
+            if(Lobby.MemberCount > 1)
+            {
+                Header.SetOverride("Waiting for host to begin...");
+            }
+            else
+            {
+                Header.SetOverride("Waiting for players...");
+            }
 
             if(Lobby.Owner.Id == Game.SteamId)
             {
@@ -371,7 +378,14 @@ public partial class GameMenu
         if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS) return;
 
         LobbyState = LOBBY_STATE.WAITING_FOR_PLAYERS;
-        Header.SetOverride("Waiting for players...");
+        if(AllPlayers.Count > 1)
+        {
+            Header.SetOverride("Waiting for host to begin...");
+        }
+        else
+        {
+            Header.SetOverride("Waiting for players...");
+        }
 
         ResetCanvas();
         PlayerScores.Clear();
@@ -574,6 +588,11 @@ public partial class GameMenu
         {
             AllPlayers.Add(friend);
         }
+
+        if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS && AllPlayers.Count > 1)
+        {
+            Header.SetOverride("Waiting for host to begin...");
+        }
     }
 
     void OnMemberLeave(Friend friend)
@@ -624,7 +643,11 @@ public partial class GameMenu
         {
             AllPlayers.Remove(friend);
         }
-        if(AllPlayers.Count == 1 && Lobby.Owner.Id == Game.SteamId)
+        if(LobbyState == LOBBY_STATE.WAITING_FOR_PLAYERS && AllPlayers.Count <= 1)
+        {
+            Header.SetOverride("Waiting for players...");
+        }
+        if((LobbyState == LOBBY_STATE.CHOOSING_WORD || LobbyState == LOBBY_STATE.PLAYING) && AllPlayers.Count == 1 && Lobby.Owner.Id == Game.SteamId)
         {
             NetworkShowResults();
         }
