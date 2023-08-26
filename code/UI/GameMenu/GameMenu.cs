@@ -542,7 +542,7 @@ public partial class GameMenu
 
         if(drawingState)
         {
-            if(!isDrawing && Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.Contains(Lobby.Data["guess"]))
+            if(!isDrawing && Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.ToLower().Contains(Lobby.Data["guess"].ToLower()))
             {
                 if(Lobby.Owner.Id == Game.SteamId)
                 {
