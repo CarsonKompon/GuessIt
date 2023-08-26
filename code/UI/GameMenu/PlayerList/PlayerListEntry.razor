@@ -17,13 +17,14 @@
         <div class="player-name">@Player.Name</div>
         <div class="player-score">Score: @Score</div>
     </div>
-    <div class="rank">##1</div>
+    <div class="rank">##@(Rank)</div>
 </root>
 
 @code
 {
     public Friend Player { get; set; }
     public Sandbox.Menu.ILobby Lobby { get; set; }
+    public int Rank { get; set; } = 1;
 
     long Score { get; set; } = 0;
 
@@ -32,8 +33,13 @@
         Score = score;
     }
 
+    public void SetRank(int rank)
+    {
+        Rank = rank;
+    }
+
     protected override int BuildHash()
     {
-        return HashCode.Combine(Score);
+        return HashCode.Combine(Score, Player.Id == Lobby.Owner.Id, Rank);
     }
 }

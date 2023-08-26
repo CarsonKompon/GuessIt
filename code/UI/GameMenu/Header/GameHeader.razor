@@ -28,6 +28,13 @@
     public void SetOverride(string over)
     {
         Override = over;
+
+        foreach(var child in WordContainer.Children)
+        {
+            child.Delete();
+        }
+
+        StateHasChanged();
     }
 
     public void SetWord(string word, string header = "Guess the following:", bool visible = false)
