@@ -56,9 +56,10 @@
             var letterPanel = WordContainer.AddChild<GameLetter>();
             letterPanel.Style.AnimationDelay = 0.08f * i;
             letterPanel.Letter = letter.ToString();
-            if(letter == ' ')
+            // check if letter is alphanumeric
+            if(!Char.IsLetterOrDigit(letter) || Char.IsSymbol(letter))
             {
-                letterPanel.AddClass("space");
+                letterPanel.AddClass("symbol");
                 letterPanel.Hidden = false;
             }
             if(visible) letterPanel.Hidden = false;
