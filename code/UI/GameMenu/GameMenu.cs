@@ -356,6 +356,12 @@ public partial class GameMenu
 
     void SendChat()
     {
+        if((LobbyState == LOBBY_STATE.CHOOSING_WORD || LobbyState == LOBBY_STATE.PLAYING) && Drawing.Id == Game.SteamId)
+        {
+            ChatEntry.Text = "";
+            return;
+        }
+        
         Lobby.SendChat(ChatText);
         ChatEntry.Text = "";
         ChatEntry.Focus();
@@ -465,7 +471,9 @@ public partial class GameMenu
 
     void OnChatMessage(Friend friend, string message)
     {
-        if(CorrectPlayers.Contains(friend) && CorrectPlayers.Contains(new Friend(Game.SteamId)))
+        bool isDrawing = (LobbyState == LOBBY_STATE.CHOOSING_WORD || LobbyState == LOBBY_STATE.PLAYING) && Drawing.Id == Game.SteamId;
+
+        if(isDrawing || (CorrectPlayers.Contains(friend) && CorrectPlayers.Contains(new Friend(Game.SteamId))))
         {
             CreateChatEntry(friend.Name + ":", message);
         }
@@ -632,10 +640,13 @@ public partial class GameMenu
         }
     }
 
-    public void Draw(List<Vector2> points, Color color, int size)
+    public async void Draw(List<Vector2> points, Color color, int size, bool delay = false)
     {
         if(Canvas is null) return;
         if(LobbyState != LOBBY_STATE.PLAYING) return;
+
+        float totalTime = 20f;
+
 
         // Draw lines of radius size between each point with color color
         for(int i=0; i<points.Count - 1; i++)
@@ -647,12 +658,16 @@ public partial class GameMenu
             for(int j=0; j<length; j++)
             {
                 Vector2 point = point1 + (diff.Normal * j);
-                Draw(point, color, size, false);
+                Draw(point, color, size, delay);
+                if(delay) await GameTask.Delay((int)MathF.Floor(totalTime / length));
             }
         }
 
-        CanvasPanel.SetTexture(Canvas);
-        StateHasChanged();
+        if(!delay)
+        {
+            CanvasPanel.SetTexture(Canvas);
+            StateHasChanged();
+        }
     }
 
 

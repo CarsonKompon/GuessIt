@@ -77,7 +77,7 @@ public partial class GameMenu
                     ushort y = data.Read<ushort>();
                     points.Add(new Vector2(x, y));
                 }
-                Draw(points, color, size);
+                Draw(points, color, size, true);
                 break;
             
             case LOBBY_MESSAGE.REQUEST_CANVAS:
@@ -128,6 +128,7 @@ public partial class GameMenu
                 CreateChatEntry(player.Name, " guessed correctly!");
                 Audio.Play("ui.guess.correct");
 
+                if(!CorrectPlayers.Contains(player)) CorrectPlayers.Add(player);
                 GivePlayerScore(player.Id, playerScore, false);
                 GivePlayerScore(drawing.Id, drawingScore, false);
                 UpdatePlayerOrder();
