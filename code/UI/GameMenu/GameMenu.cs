@@ -272,10 +272,14 @@ public partial class GameMenu
         }
         else if(CorrectPlayers.Count == 1)
         {
-            GameTimer = 30;
+            if(GameTimer > 30f) GameTimer = 30;
         }
         else
         {
+            if(CorrectPlayers.Count >= MathF.Floor((AllPlayers.Count - 1)/2))
+            {
+                if(GameTimer > 15f) GameTimer = 15f;
+            }
             PlayerScore = (long)MathF.Floor(Utils.Map(GameTimer, 30, 0, 1000, 200));
             DrawingScore = 100;
         }
@@ -606,7 +610,7 @@ public partial class GameMenu
 
         if(drawingState)
         {
-            if(!isDrawing && Lobby.Data["state"] == LOBBY_STATE.PLAYING.ToString() && message.ToLowerInvariant().Contains(Lobby.Data["guess"].ToLowerInvariant()))
+            if(!isDrawing && GameTimer > 0 && LobbyState == LOBBY_STATE.PLAYING && message.ToLowerInvariant().Contains(Lobby.Data["guess"].ToLowerInvariant()))
             {
                 if(Lobby.Owner.Id == Game.SteamId)
                 {

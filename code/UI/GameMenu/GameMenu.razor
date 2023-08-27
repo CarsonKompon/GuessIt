@@ -53,11 +53,11 @@
 
                 <div class="chat" @ref="ChatBox" PreferScrollToBottom=@(true)>
                     
-
+                    
 
                 </div>
 
-                <TextEntry @ref="ChatEntry" onsubmit=@SendChat Value:bind=@ChatText Placeholder="Type your guess here..." AllowEmojiReplace=@(true) ></TextEntry>
+                <TextEntry @ref="ChatEntry" CaretColor=@(Color.Gray) onsubmit=@SendChat Value:bind=@ChatText Placeholder="Type your guess here..." AllowEmojiReplace=@(true) ></TextEntry>
             </div>
 
         </div>
