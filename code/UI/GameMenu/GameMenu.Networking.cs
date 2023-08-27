@@ -136,13 +136,11 @@ public partial class GameMenu
                 GivePlayerScore(drawing.Id, drawingScore, false);
                 UpdatePlayerOrder();
 
-                float timer = GameTimer;
-                if(Lobby.Data.ContainsKey("timer")) timer = float.Parse(Lobby.Data["timer"]);
-                if(timer < GameTimer) GameTimer = timer;
-
                 if(Lobby.Owner.Id != Game.SteamId)
                 {
-                    if(Lobby.Data.ContainsKey("timer")) GameTimer = float.Parse(Lobby.Data["timer"]);
+                    float timer = GameTimer;
+                    if(Lobby.Data.ContainsKey("timer")) timer = float.Parse(Lobby.Data["timer"]);
+                    if(timer < GameTimer) GameTimer = timer;
                 }
 
                 break;
