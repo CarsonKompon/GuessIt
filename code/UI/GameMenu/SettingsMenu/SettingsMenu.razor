@@ -1,0 +1,48 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using Sandbox.MenuSystem;
+@using System;
+@using System.Collections.Generic;
+@attribute [StyleSheet]
+
+@namespace GuessIt
+
+<root>
+
+    <div class="content">
+        <p class="header">Settings</p>
+        <div class="settings">
+            
+            <div class="setting">
+                <p class="title">Ticking SFX:</p>
+                <div class="slider switch">
+                    <SwitchControl Value:bind=@TickingSounds />
+                    <output>@(TickingSounds ? "ON" : "OFF")</output>
+                </div>
+            </div>
+
+        </div>
+        <div class="buttons">
+            <button onclick=@Close>Back</button>
+        </div>
+    </div>
+</root>
+
+@code
+{
+    bool TickingSounds
+    {
+        get => Cookie.Get<bool>("TickingSounds", true);
+        set => Cookie.Set("TickingSounds", value);
+    }
+
+    void Close()
+    {
+        this.Delete();
+    }
+
+    protected override int BuildHash()
+    {
+        return HashCode.Combine(TickingSounds);
+    }
+}

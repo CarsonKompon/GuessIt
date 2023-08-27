@@ -33,6 +33,7 @@ public partial class GameMenu
     int Rounds = 2;
 
     // UI Variables
+    SettingsMenu GameSettings { get; set; }
     GameHeader Header { get; set; }
     Panel PlayerList { get; set; }
     Panel CanvasContainer { get; set; }
@@ -763,8 +764,11 @@ public partial class GameMenu
 
                 if(MathF.Floor(MathF.Max(GameTimer, 0)) != previous)
                 {
-                    Audio.Play("ui.clock.tick" + (ClockIndex + 1));
-                    ClockIndex = (ClockIndex + 1) % 2;
+                    if(Cookie.Get<bool>("TickingSounds", true))
+                    {
+                        Audio.Play("ui.clock.tick" + (ClockIndex + 1));
+                        ClockIndex = (ClockIndex + 1) % 2;
+                    }
                 }
 
                 if(GameTimer <= 0f)
@@ -821,6 +825,15 @@ public partial class GameMenu
             LastUpdate = 0f;
         }
 	}
+
+    void OpenSettings()
+    {
+        if(GameSettings.IsValid())
+        {
+            GameSettings.Delete();
+        }
+        GameSettings = AddChild<SettingsMenu>();
+    }
 
 	// DRAWING FUNCTIONS
 
