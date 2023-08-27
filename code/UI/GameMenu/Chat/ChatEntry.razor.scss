@@ -33,4 +33,9 @@ ChatEntry
     {
         color: rgb(255, 51, 0);
     }
+
+    &.is-drawing
+    {
+        color: rgb(255, 145, 0);
+    }
 }

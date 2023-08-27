@@ -195,6 +195,7 @@ public partial class GameMenu
         GameTimer = 15f;
         UpdatePlayerClass(Drawing, "drawing");
         hasDrawn = false;
+        CreateChatEntry(Drawing.Name, " is drawing...", "is-drawing");
 
         if(Lobby.Owner.Id == Game.SteamId)
         {
