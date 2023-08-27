@@ -279,7 +279,7 @@ public partial class GameMenu
         {
             if(CorrectPlayers.Count >= MathF.Floor((AllPlayers.Count - 1)/2))
             {
-                if(GameTimer > 15f) GameTimer = 15f;
+                if(GameTimer > 10f) GameTimer = 10f;
             }
             PlayerScore = (long)MathF.Floor(Utils.Map(GameTimer, 30, 0, 1000, 200));
             DrawingScore = 100;
