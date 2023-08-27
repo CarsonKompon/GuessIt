@@ -17,7 +17,10 @@
         <div class="game-header">
             <div class="game-info">
                 <div class="timer">@MathF.Floor(MathF.Max(GameTimer, 0))</div>
-                <div class="round">Round 1 of 3</div>
+                @if(Round > 0)
+                {
+                    <div class="round">Round @(Round) of @(Rounds)</div>
+                }
             </div>
 
             <div class="game-word">

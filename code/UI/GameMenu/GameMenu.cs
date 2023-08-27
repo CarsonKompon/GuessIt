@@ -29,6 +29,8 @@ public partial class GameMenu
     float GameTimer = 90f;
     List<Friend> AllPlayers = new List<Friend>();
     bool hasDrawn = false;
+    int Round = 0;
+    int Rounds = 2;
 
     // UI Variables
     GameHeader Header { get; set; }
@@ -95,6 +97,10 @@ public partial class GameMenu
         Lobby.SetData("guess", "");
         Lobby.SetData("correct", "");
         Lobby.SetData("timer", "120");
+        Lobby.SetData("rounds", "2");
+        Lobby.SetData("round", "0");
+        Round = 0;
+        Rounds = 2;
     }
 
     void JoinedLobby()
@@ -116,6 +122,8 @@ public partial class GameMenu
                 }
             }
         }
+        if(Lobby.Data.ContainsKey("round")) Round = int.Parse(Lobby.Data["round"]);
+        if(Lobby.Data.ContainsKey("rounds")) Rounds = int.Parse(Lobby.Data["rounds"]);
         GetLobbyPlayerData();
 
         if(LobbyState == LOBBY_STATE.CHOOSING_WORD)
@@ -173,6 +181,8 @@ public partial class GameMenu
         }
         // Randomize the order of the list
         StartingPlayers.Sort((a, b) => (new Random()).Next(0, 2) == 0 ? -1 : 1);
+        Lobby.SetData("rounds", StartingPlayers.Count.ToString());
+        Lobby.SetData("round", "1");
         Lobby.SetData("players", ListString(StartingPlayers));
         Lobby.SetData("played", "");
 
@@ -335,6 +345,8 @@ public partial class GameMenu
             Header.SetOverride(Drawing.Name + " is choosing a word...");
             Lobby.SetData("played", ListString(FinishedPlayers));
             Lobby.SetData("drawing", Drawing.Id.ToString());
+            Lobby.SetData("rounds", (StartingPlayers.Count + FinishedPlayers.Count).ToString());
+            Lobby.SetData("round", FinishedPlayers.Count.ToString());
             NetworkStartRound();
         }
         else
@@ -416,6 +428,8 @@ public partial class GameMenu
         ResetCanvas();
         PlayerScores.Clear();
         UpdatePlayerOrder();
+        Round = 0;
+        Rounds = 2;
 
         foreach(var child in CanvasContainer.Children)
         {
@@ -893,6 +907,6 @@ public partial class GameMenu
 
     protected override int BuildHash()
     {
-        return HashCode.Combine(LogoClass(), AllPlayers.Count, MathF.Floor(GameTimer));
+        return HashCode.Combine(LogoClass(), AllPlayers.Count, MathF.Floor(GameTimer), Round, Rounds);
     }
 }
