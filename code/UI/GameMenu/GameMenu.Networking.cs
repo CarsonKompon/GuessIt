@@ -80,7 +80,7 @@ public partial class GameMenu
                     ushort y = data.Read<ushort>();
                     points.Add(new Vector2(x, y));
                 }
-                Draw(points, color, size);
+                Draw(points, color, size, true);
                 break;
             
             case LOBBY_MESSAGE.REQUEST_CANVAS:

@@ -844,8 +844,8 @@ public partial class GameMenu
         if(Canvas is null) return;
         if(LobbyState != LOBBY_STATE.PLAYING) return;
 
-        float totalTime = 20f;
-
+        float totalTime = 50f;
+        float timePerPoint = totalTime / points.Count;
 
         // Draw lines of radius size between each point with color color
         for(int i=0; i<points.Count - 1; i++)
@@ -854,11 +854,12 @@ public partial class GameMenu
             Vector2 point2 = points[i + 1];
             Vector2 diff = point2 - point1;
             float length = diff.Length;
+            float timePerThing = timePerPoint / length;
             for(int j=0; j<length; j++)
             {
                 Vector2 point = point1 + (diff.Normal * j);
                 Draw(point, color, size, delay);
-                if(delay) await GameTask.Delay((int)MathF.Floor(totalTime / length));
+                if(delay) await GameTask.Delay((int)MathF.Floor(timePerThing));
             }
         }
 
