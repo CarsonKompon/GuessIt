@@ -14,7 +14,7 @@
     {
         <div class="override">@Override</div>
     }
-    <div @ref="WordContainer" class="word">
+    <div @ref="WordContainer" class="word @WordClasses()">
     </div>
 </root>
 
@@ -28,6 +28,7 @@
     public void SetOverride(string over)
     {
         Override = over;
+        Word = "";
 
         foreach(var child in WordContainer.Children)
         {
@@ -66,8 +67,14 @@
         }
     }
 
-        protected override int BuildHash()
-        {
-            return HashCode.Combine(Override, Word, Header);
-        }
+    string WordClasses()
+    {
+        if(Word == "") return "hidden";
+        return "";
+    }
+
+    protected override int BuildHash()
+    {
+        return HashCode.Combine(Override, Word, Header);
+    }
 }
